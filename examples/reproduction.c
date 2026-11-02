@@ -145,10 +145,8 @@ static pl_status install(world *w, pl_diagnostic *d) {
     pl_vesicle_ledger ledger = pl_vesicles_ledger(w->p);
     w->membranes0 = pl_vesicles_membranes(w->p);
     w->total0 = pl_vesicles_fatty_acid(w->p) + ledger.washed - ledger.renewed_monomer;
-    if (w->o.stop) {  /* from the first cycle on, the seeded lineage keeps what its chemistry made and remakes nothing */
-        pl_status status = pl_vesicles_set_inert(w->p, r, 1, d);
-        if (status != PL_OK) return status;
-    }
+    /* from the first cycle on, a stopped seeded lineage keeps what its chemistry made and remakes nothing */
+    if (w->o.stop && (status = pl_vesicles_set_inert(w->p, r, 1, d)) != PL_OK) return status;
     return step(w, d);
 }
 
