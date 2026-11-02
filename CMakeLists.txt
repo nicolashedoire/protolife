@@ -17,7 +17,10 @@ add_library(protolife
   src/formula.c
   src/network.c
   src/ode.c
+  src/protocol.c
   src/reactor.c
+  src/rodas.c
+  src/scene.c
   src/vesicles.c
   src/vesicles_events.c)
 add_library(protolife::protolife ALIAS protolife)

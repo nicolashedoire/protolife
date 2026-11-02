@@ -261,6 +261,22 @@ static pl_status failure_status(const pl_ode *ode, int flag) {
     }
 }
 
+/* The component whose estimated local error, weighted as CVODE weighs it, is the largest; -1 when unknown. */
+static int worst_component(pl_ode *ode) {
+    N_Vector errors = N_VClone(ode->y), weights = N_VClone(ode->y);
+    int worst = -1;
+    if (errors != NULL && weights != NULL && CVodeGetEstLocalErrors(ode->cvode, errors) == CV_SUCCESS &&
+        CVodeGetErrWeights(ode->cvode, weights) == CV_SUCCESS) {
+        const double *e = N_VGetArrayPointer(errors), *w = N_VGetArrayPointer(weights);
+        double largest = -1.0;
+        for (int i = 0; i < ode->options.size; i++)
+            if (fabs(e[i] * w[i]) > largest) largest = fabs(e[i] * w[i]), worst = i;
+    }
+    if (errors != NULL) N_VDestroy(errors);
+    if (weights != NULL) N_VDestroy(weights);
+    return worst;
+}
+
 pl_status pl_ode_advance(pl_ode *ode, double t_end, int *fired, pl_diagnostic *diagnostic) {
     if (ode == NULL) return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the integrator is required");
     if (!isfinite(t_end) || !(t_end > ode->t))
@@ -284,12 +300,14 @@ pl_status pl_ode_advance(pl_ode *ode, double t_end, int *fired, pl_diagnostic *d
     }
     double stopped = ode->t;
     CVodeGetCurrentTime(ode->cvode, &stopped);
-    char *name = CVodeGetReturnFlagName(flag);
+    char *name = CVodeGetReturnFlagName(flag), worst[96] = "";
+    int component = worst_component(ode);
+    if (component >= 0) snprintf(worst, sizeof worst, "; the largest weighted local error is on component %d", component);
     pl_status status = failure_status(ode, flag);
     int restored = reinitialise(ode, ode->t, ode->y) == CV_SUCCESS;
-    pl_fail(diagnostic, status, flag, stopped, "CVODE stopped with %s at t = %.17g on the way from %.17g to %.17g%s%s%s%s%s",
+    pl_fail(diagnostic, status, flag, stopped, "CVODE stopped with %s at t = %.17g on the way from %.17g to %.17g%s%s%s%s%s%s",
             name != NULL ? name : "an unknown flag", stopped, ode->t, t_end, ode->sundials[0] ? ": " : "", ode->sundials,
-            ode->note[0] ? "; " : "", ode->note, restored ? "" : "; the integrator could not return to its last state");
+            worst, ode->note[0] ? "; " : "", ode->note, restored ? "" : "; the integrator could not return to its last state");
     free(name);
     return status;
 }

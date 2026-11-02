@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "diagnostic_internal.h"
+#include "protolife/rodas.h"
 #include "vesicles_internal.h"
 
 #define MINUTE 60.0
@@ -380,46 +381,28 @@ static int jacobian(double t, const double *y, double *jac, void *context) {
     return 0;
 }
 
-static void add_statistics(pl_ode_statistics *total, const pl_ode_statistics *more) {
-    total->steps += more->steps, total->rhs_evaluations += more->rhs_evaluations;
-    total->jacobian_evaluations += more->jacobian_evaluations;
-    total->error_test_failures += more->error_test_failures, total->convergence_failures += more->convergence_failures;
-}
-
 pl_status pl_vesicles_advance(pl_vesicles *p, double dt, pl_diagnostic *diagnostic) {
     if (p == NULL) return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the population is required");
     if (!(dt > 0.0) || !isfinite(dt)) return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, p->time, "dt must be > 0");
     int n = pl_vesicles_state_size(p);
-    double *y = malloc(5 * (size_t)n * sizeof *y), *absolute = y != NULL ? y + n : NULL;
+    double *y = malloc(5 * (size_t)n * sizeof *y), *floor = y != NULL ? y + n : NULL;
     if (y == NULL) return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, p->time, "no memory to advance the vesicles");
     p->work = y + 2 * n;
     pl_vesicles_pack(p, y);
-    for (int i = 0; i < n; i++) absolute[i] = p->tolerance * fmax(fabs(y[i]) * 1e-6, 1e-18);
-    pl_ode_options o = {.size = n, .rhs = derivative, .jacobian = jacobian, .context = p, .relative_tolerance = p->tolerance,
-                        .absolute_tolerance = absolute, .max_steps = MOST_STEPS, .initial_step = fmin(p->step, dt),
-                        /* the switch between a relaxed vesicle and a tense sphere is a kink Newton crosses slowly */
-                        .max_nonlinear_iterations = 10, .max_convergence_failures = 100};
-    pl_ode *ode = NULL;
-    pl_status status = pl_ode_create(&o, 0.0, y, &ode, diagnostic);
-    if (status == PL_OK) status = pl_ode_advance(ode, dt, NULL, diagnostic);
-    if (ode != NULL) {
-        pl_ode_statistics s;
-        pl_ode_get_statistics(ode, &s);
-        add_statistics(&p->statistics, &s);
-    }
+    for (int i = 0; i < n; i++) floor[i] = fmax(fabs(y[i]) * 1e-6, 1e-18);
+    pl_rodas_options o = {.size = n, .rhs = derivative, .jacobian = jacobian, .context = p, .tolerance = p->tolerance,
+                          .floor = floor, .smallest = dt * 1e-30, .max_trials = MOST_STEPS};
+    pl_status status = pl_rodas_advance(&o, p->time, y, dt, &p->step, &p->statistics, diagnostic);
     if (status == PL_OK) {
-        unpack(p, pl_ode_state(ode));
-        p->step = pl_ode_last_step(ode), p->time += dt;
+        unpack(p, y);
+        p->time += dt;
         p->anhydride_fed += p->anhydride_feed * dt;
         pl_vesicles_rupture(p);
         pl_vesicles_come_apart(p);
         pl_vesicles_births(p);
         pl_vesicles_divisions(p);
         pl_vesicles_wash(p, dt);
-    } else if (diagnostic != NULL) {  /* the integrator's time is relative to the step */
-        diagnostic->time += p->time;
     }
-    pl_ode_free(ode);
     p->work = NULL;
     free(y);
     return status;
@@ -529,7 +512,8 @@ double pl_vesicles_outside(const pl_vesicles *p, int solute) {
 pl_vesicle pl_vesicles_record(const pl_vesicles *p, int r) {
     if (p == NULL || r < 0 || r >= p->records) return (pl_vesicle){0};
     const record_t *v = &p->record[r];
-    return (pl_vesicle){v->count, v->molecules, v->released, v->generation, v->origin, v->inert, v->label, pl_inside(p, r)};
+    return (pl_vesicle){v->count,   v->molecules, v->released,     v->generation, v->origin,
+                        v->inert,   v->label,     v->coat,         v->intermediate, pl_inside(p, r)};
 }
 
 int pl_vesicles_find(const pl_vesicles *p, int label) {
@@ -572,6 +556,8 @@ double pl_vesicles_entering(const pl_vesicles *p) {
     for (int r = 0; r < p->records; r++) total += p->record[r].coat + p->record[r].intermediate;
     return total;
 }
+
+double pl_vesicles_forming(const pl_vesicles *p) { return p != NULL ? p->forming + p->newborn : NAN; }
 
 double pl_vesicles_fatty_acid(const pl_vesicles *p) {
     return p != NULL ? p->monomer + pl_vesicles_entering(p) + pl_vesicles_membranes(p) : NAN;

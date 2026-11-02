@@ -4,6 +4,7 @@
 #include "protolife/diagnostic.h"
 #include "protolife/network.h"
 #include "protolife/ode.h"
+#include "protolife/rodas.h"
 
 /*
  * A population of fatty acid vesicles in a stirred medium: each one a membrane of fatty acids around its own water and
@@ -30,9 +31,10 @@
  * - Under a shear at least the critical one (Zhu and Szostak, J. Am. Chem. Soc. 131, 5705, 2009), a vesicle stretched
  *   thin (reduced volume below a threshold) divides into the fewest equal daughters whose reduced volume reaches it.
  *
- * Each call of pl_vesicles_advance integrates the continuous part with pl_ode (CVODE with up to 10 Newton iterations a
- * step, for the kink where a relaxed vesicle becomes a tense sphere; Jacobian by differences as in Genesis), then
- * applies ruptures, comings apart, births, divisions and the washout, in that order. A call that fails changes nothing.
+ * Each call of pl_vesicles_advance integrates the continuous part with RODAS3 (protolife/rodas.h) and Genesis's
+ * Jacobian by differences, as Genesis does: the switch between a relaxed vesicle and a tense sphere is a kink where a
+ * Newton iteration stalls. Ruptures, comings apart, births, divisions and the washout are then applied, in that order.
+ * A call that fails changes nothing.
  * Amounts are per litre of the vessel, concentrations in the medium in mol/L, lengths in m, time in s.
  */
 
@@ -78,6 +80,8 @@ typedef struct pl_vesicle {
     int origin;             /* 0 for the vesicles of the start, k for those born of the k-th feed of micelles */
     int inert;              /* 1: no reaction inside (a control of the same size and contents) */
     int label;              /* the caller's name for the record */
+    double coat;            /* mol/L of fed fatty acid on the record's membranes, entering fast */
+    double intermediate;    /* mol/L of intermediate entering the record's membranes, slowly */
     const double *inside;   /* mol of each solute in each vesicle; valid until the population changes */
 } pl_vesicle;
 
@@ -161,6 +165,8 @@ double pl_vesicles_shear(const pl_vesicles *population);
 /* mol/L of fatty acid on its way into the membranes: the coat, the intermediate entering them, the one making new
  * vesicles and what it made, summed over the records. */
 double pl_vesicles_entering(const pl_vesicles *population);
+/* mol/L of the intermediate making new vesicles, and of the fatty acid it made waiting to close into them. */
+double pl_vesicles_forming(const pl_vesicles *population);
 double pl_vesicles_membranes(const pl_vesicles *population);           /* mol/L of fatty acid in membranes */
 double pl_vesicles_fatty_acid(const pl_vesicles *population);          /* all fatty acid, mol/L */
 double pl_vesicles_solute_total(const pl_vesicles *population, int solute);
