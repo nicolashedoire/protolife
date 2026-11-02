@@ -40,6 +40,10 @@ typedef struct pl_ode_options {
                                           shorter; the initial state must then be nonnegative */
     long max_steps;                    /* internal steps allowed per call of pl_ode_advance; 0 keeps CVODE's 500 */
     double min_step, max_step;         /* bounds on the internal step; 0 for none */
+    double initial_step;               /* the first internal step to try; 0 lets CVODE estimate it */
+    int max_nonlinear_iterations;      /* Newton iterations per step; 0 keeps CVODE's 3. A model with kinks (a switch
+                                          between two regimes) may need more */
+    int max_convergence_failures;      /* Newton failures allowed in one step; 0 keeps CVODE's 10 */
     int events;                        /* the number of event functions, 0 for none */
     pl_ode_events event;               /* required when events > 0 */
 } pl_ode_options;
@@ -60,10 +64,13 @@ pl_status pl_ode_create(const pl_ode_options *options, double t0, const double *
 pl_status pl_ode_advance(pl_ode *ode, double t_end, int *fired, pl_diagnostic *diagnostic);
 
 /* Starts again from time t and state y (copied): after the caller changes the state between two calls, as a feeding,
- * a dilution or a division does. On failure the integrator keeps its previous time and state. */
+ * a dilution or a division does. The first step tried is the last one taken. On failure the integrator keeps its
+ * previous time and state. */
 pl_status pl_ode_restart(pl_ode *ode, double t, const double *y, pl_diagnostic *diagnostic);
 
 double pl_ode_time(const pl_ode *ode);
+/* The last internal step CVODE took (0 before any): a good initial_step for an integrator that takes over. */
+double pl_ode_last_step(const pl_ode *ode);
 /* The n values of the state, owned by the integrator and valid until it is freed. */
 const double *pl_ode_state(const pl_ode *ode);
 int pl_ode_size(const pl_ode *ode);

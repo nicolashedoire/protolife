@@ -7,5 +7,6 @@
 #include "protolife/ode.h"
 #include "protolife/network.h"
 #include "protolife/reactor.h"
+#include "protolife/vesicles.h"
 
 #endif

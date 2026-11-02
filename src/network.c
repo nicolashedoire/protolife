@@ -420,6 +420,12 @@ int pl_network_species_charge(const pl_network *network, int s) {
     return x != NULL ? x->charge : 0;
 }
 
+int pl_network_species_atoms(const pl_network *network, int s, const char *element) {
+    const species *x = species_at(network, s);
+    int e = pl_element_find(element);
+    return x != NULL && e >= 0 ? x->atoms[e] : 0;
+}
+
 pl_role pl_network_species_role(const pl_network *network, int s) {
     const species *x = species_at(network, s);
     return x != NULL ? x->role : PL_DYNAMIC;

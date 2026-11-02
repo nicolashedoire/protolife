@@ -54,6 +54,8 @@ int pl_network_find(const pl_network *network, const char *name);
 const char *pl_network_species_name(const pl_network *network, int species);
 const char *pl_network_species_formula(const pl_network *network, int species);
 int pl_network_species_charge(const pl_network *network, int species);
+/* Atoms of `element` ("C", "N", ...) in one molecule of the species; 0 for an unknown element or species. */
+int pl_network_species_atoms(const pl_network *network, int species, const char *element);
 pl_role pl_network_species_role(const pl_network *network, int species);
 double pl_network_species_molar(const pl_network *network, int species);
 double pl_network_reaction_constant(const pl_network *network, int reaction);

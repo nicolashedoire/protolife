@@ -1,0 +1,31 @@
+# The organisation of the E0 core "random1" of Genesis's Origin chemistry: formaldehyde's network, rebuilt
+# from data/origin/e0/cores/random1.core.tsv with rules v2, the ammonia scenario, formaldehyde at 0.5 mol/L and a dilution of 5e-4 /s.
+# Exported by Genesis tools/network_export.c. Species are named by their SMILES; the concentration of
+# each dynamic species is the core's persisted state (mol/L).
+temperature 298.14999999999998
+species C=O CH2O 0 dynamic 6.8720000000000006e-05
+species OCC=O C2H4O2 0 dynamic 5.7899999999999996e-06
+species OC=CO C2H4O2 0 dynamic 5.9949999999999997e-11
+species O H2O 0 reservoir 1
+species C(O)O CH4O2 0 dynamic 0.1618
+species OC(C=O)CO C3H6O3 0 dynamic 4.4680000000000003e-06
+species OC(=CO)CO C3H6O3 0 dynamic 1.2729999999999999e-10
+species O=C(C(O)CO)CO C4H8O4 0 dynamic 0.073200000000000001
+species OC(C=O)(CO)C(CO)O C5H10O5 0 dynamic 0.0090679999999999997
+species OC(C(O)CO)=CO C4H8O4 0 dynamic 5.6809999999999997e-09
+reaction OCC=O -> OC=CO ; k=7089.8213263324851 ; source=enolisation of an aldehyde (linear)
+reaction OC=CO -> OCC=O ; k=683994534.03428853 ; source=reverse of enolisation of an aldehyde, from the free energies
+reaction C=O + OC=CO -> OC(C=O)CO ; k=10000000000 ; source=aldol on HCHO, C2 donor (linear)
+reaction OC(C=O)CO -> C=O + OC=CO ; k=0.013346232562991382 ; source=reverse of aldol on HCHO, C2 donor, from the free energies
+reaction C=O + O -> C(O)O ; k=245437.34576194853 ; source=hydration of HCHO (linear)
+reaction C(O)O -> C=O + O ; k=104.26268750099064 ; source=reverse of hydration of HCHO, from the free energies
+reaction OC(C=O)CO -> OC(=CO)CO ; k=7089.8213263324851 ; source=enolisation of an aldehyde (linear)
+reaction OC(=CO)CO -> OC(C=O)CO ; k=248456922.25311178 ; source=reverse of enolisation of an aldehyde, from the free energies
+reaction C=O + OC(=CO)CO -> O=C(C(O)CO)CO ; k=10000000000 ; source=aldol on HCHO, C3+ donor (linear)
+reaction O=C(C(O)CO)CO -> C=O + OC(=CO)CO ; k=7.1293639045791378e-05 ; source=reverse of aldol on HCHO, C3+ donor, from the free energies
+reaction OCC=O + OC(=CO)CO -> OC(C=O)(CO)C(CO)O ; k=1552.1475202189965 ; source=aldol on a sugar (creates a branch)
+reaction OC(C=O)(CO)C(CO)O -> OCC=O + OC(=CO)CO ; k=0.0045369473779093596 ; source=reverse of aldol on a sugar, from the free energies
+reaction O=C(C(O)CO)CO -> OC(C(O)CO)=CO ; k=1837.5249742313649 ; source=enolisation of a ketone (linear)
+reaction OC(C(O)CO)=CO -> O=C(C(O)CO)CO ; k=23678707152.398598 ; source=reverse of enolisation of a ketone, from the free energies
+reaction C=O + OC(C(O)CO)=CO -> OC(C=O)(CO)C(CO)O ; k=8601148707.0198879 ; source=aldol on HCHO, C3+ donor (creates a branch)
+reaction OC(C=O)(CO)C(CO)O -> C=O + OC(C(O)CO)=CO ; k=0.36523330427023615 ; source=reverse of aldol on HCHO, C3+ donor, from the free energies

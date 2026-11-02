@@ -23,6 +23,8 @@ static int element_find(const char *symbol, size_t length) {
     return -1;
 }
 
+int pl_element_find(const char *symbol) { return symbol != NULL ? element_find(symbol, strlen(symbol)) : -1; }
+
 /* A count after an element or a group: 1 when absent; -1 when it overflows. */
 static int read_count(const char **p) {
     if (!isdigit((unsigned char)**p)) return 1;

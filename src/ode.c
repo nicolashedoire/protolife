@@ -107,10 +107,14 @@ static void add_counts(const pl_ode *ode, pl_ode_statistics *s) {
     s->error_test_failures += error_tests, s->convergence_failures += convergence;
 }
 
-/* Reinitialises CVODE at (t, y), keeping the counts of the run it ends. */
+/* Reinitialises CVODE at (t, y), keeping the counts of the run it ends; the first step tried is the last one taken. */
 static int reinitialise(pl_ode *ode, double t, N_Vector y) {
+    double last = 0.0;
+    CVodeGetLastStep(ode->cvode, &last);
     add_counts(ode, &ode->before);
-    return CVodeReInit(ode->cvode, t, y);
+    int flag = CVodeReInit(ode->cvode, t, y);
+    if (flag == CV_SUCCESS && last > 0.0) flag = CVodeSetInitStep(ode->cvode, last);
+    return flag;
 }
 
 static pl_status cvode_failure(pl_ode *ode, int flag, int linear, const char *what, double t,
@@ -148,7 +152,8 @@ static pl_status check_options(const pl_ode_options *o, double t0, const double 
         if (!(o->absolute_tolerance[i] > 0.0) || !isfinite(o->absolute_tolerance[i]))
             return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN,
                            "the absolute tolerance of component %d must be positive and finite", i);
-    if (o->max_steps < 0 || !(o->min_step >= 0.0) || !(o->max_step >= 0.0))
+    if (o->max_steps < 0 || !(o->min_step >= 0.0) || !(o->max_step >= 0.0) || !(o->initial_step >= 0.0) ||
+        o->max_nonlinear_iterations < 0 || o->max_convergence_failures < 0)
         return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the step limits must not be negative");
     if (o->events < 0 || (o->events > 0 && o->event == NULL))
         return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "events > 0 needs the event functions");
@@ -185,6 +190,12 @@ static pl_status configure(pl_ode *ode, double t0, pl_diagnostic *diagnostic) {
         what = "CVodeSetMaxNumSteps", flag = CVodeSetMaxNumSteps(ode->cvode, o->max_steps);
     if (flag == CV_SUCCESS && o->min_step > 0.0) what = "CVodeSetMinStep", flag = CVodeSetMinStep(ode->cvode, o->min_step);
     if (flag == CV_SUCCESS && o->max_step > 0.0) what = "CVodeSetMaxStep", flag = CVodeSetMaxStep(ode->cvode, o->max_step);
+    if (flag == CV_SUCCESS && o->max_nonlinear_iterations > 0)
+        what = "CVodeSetMaxNonlinIters", flag = CVodeSetMaxNonlinIters(ode->cvode, o->max_nonlinear_iterations);
+    if (flag == CV_SUCCESS && o->max_convergence_failures > 0)
+        what = "CVodeSetMaxConvFails", flag = CVodeSetMaxConvFails(ode->cvode, o->max_convergence_failures);
+    if (flag == CV_SUCCESS && o->initial_step > 0.0)
+        what = "CVodeSetInitStep", flag = CVodeSetInitStep(ode->cvode, o->initial_step);
     if (flag == CV_SUCCESS && o->events > 0) what = "CVodeRootInit", flag = CVodeRootInit(ode->cvode, o->events, roots);
     return flag == CV_SUCCESS ? PL_OK : cvode_failure(ode, flag, linear, what, t0, diagnostic);
 }
@@ -302,6 +313,12 @@ pl_status pl_ode_restart(pl_ode *ode, double t, const double *y, pl_diagnostic *
 }
 
 double pl_ode_time(const pl_ode *ode) { return ode != NULL ? ode->t : NAN; }
+
+double pl_ode_last_step(const pl_ode *ode) {
+    double last = 0.0;
+    if (ode != NULL) CVodeGetLastStep(ode->cvode, &last);
+    return last;
+}
 
 const double *pl_ode_state(const pl_ode *ode) { return ode != NULL ? N_VGetArrayPointer(ode->y) : NULL; }
 

@@ -17,7 +17,9 @@ add_library(protolife
   src/formula.c
   src/network.c
   src/ode.c
-  src/reactor.c)
+  src/reactor.c
+  src/vesicles.c
+  src/vesicles_events.c)
 add_library(protolife::protolife ALIAS protolife)
 target_include_directories(protolife PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
