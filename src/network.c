@@ -150,7 +150,7 @@ static int parse_side(const pl_network *network, const char *text, term *terms, 
         if (length == 0 || length >= sizeof name) return snprintf(problem, problem_size, "a term has no name"), -1;
         memcpy(name, start, length), name[length] = '\0';
         int s = pl_network_find(network, name);
-        if (s < 0) return snprintf(problem, problem_size, "unknown species %s", name), -1;
+        if (s < 0) return snprintf(problem, problem_size, "unknown species %.200s", name), -1;
         if (count == room) return snprintf(problem, problem_size, "too many terms"), -1;
         terms[count++] = (term){s, (int)coefficient};
     }
