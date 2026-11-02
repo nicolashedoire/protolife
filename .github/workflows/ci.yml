@@ -33,3 +33,60 @@ jobs:
         run: cmake --build build --parallel
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+  # The guide (docs/getting-started.md) on a fresh machine: its build, its first experiment, a short run of the
+  # larger one and its control.
+  guide:
+    name: guide (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROTOLIFE_TESTS=OFF
+          cmake --build build --config Release --parallel
+      - name: First experiment
+        run: |
+          bin=build/examples; [ -d build/examples/Release ] && bin=build/examples/Release
+          "$bin/first_experiment" | tee first.txt
+          grep -q "Recorded" first.txt && test -s recordings/first-active/frames.bin && test -s recordings/first-control/frames.bin
+      - name: Larger experiment, shortened
+        run: |
+          bin=build/examples; [ -d build/examples/Release ] && bin=build/examples/Release
+          "$bin/reproduction" out=recordings/ci-living start=600 cycles=1 period=300 frames=31 | tee living.txt
+          "$bin/reproduction" out=recordings/ci-control living=0 start=600 cycles=1 period=300 frames=31 | tee control.txt
+          grep -q "31 frames" living.txt && grep -q "balance of C" control.txt
+
+  # Installing the library and using it from another project, as docs/getting-started.md shows.
+  install:
+    name: install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install the shared library
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DPROTOLIFE_TESTS=OFF -DPROTOLIFE_EXAMPLES=OFF
+          cmake --build build --config Release --parallel
+          cmake --install build --config Release --prefix "$PWD/installed"
+      - name: Build and run a project that uses it
+        run: |
+          cmake -S tests/install -B downstream -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/installed"
+          cmake --build downstream --config Release
+          export PATH="$PWD/installed/bin:$PATH"
+          exe=downstream/downstream; [ -f downstream/Release/downstream.exe ] && exe=downstream/Release/downstream.exe
+          "$exe" | tee run.txt
+          grep -q "works" run.txt

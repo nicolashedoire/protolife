@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+# protolife, found by find_package(protolife): link protolife::protolife; the networks it ships are in
+# ${protolife_DATA_DIR}/networks.
+include("${CMAKE_CURRENT_LIST_DIR}/protolifeTargets.cmake")
+set_and_check(protolife_DATA_DIR "@PACKAGE_PROTOLIFE_DATA_DIR@")
+check_required_components(protolife)

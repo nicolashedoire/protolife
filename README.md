@@ -58,6 +58,13 @@ by a complete use case and a comparison with those tools; that is the roadmap be
 5. **Nothing is programmed to succeed.** No cell, division, heredity or adaptation is
    written as an outcome. A model may produce nothing, and that is a result.
 
+## Getting started
+
+[docs/getting-started.md](docs/getting-started.md) takes you from a fresh machine to your
+own experiment: build, run a protocell next to its control in a few seconds, watch both,
+change the conditions, then use the library in your own program. The continuous
+integration runs that guide on Linux, macOS and Windows.
+
 ## Watching a simulation
 
 The example `reproduction` runs living vesicles through cycles of feeding and shear:
@@ -132,8 +139,9 @@ What exists today, in C:
    divisions up to a flip-flop rate of 0.18 and none past it, bursts without lipid
    exchange, and the inactive cells of their Figure 7.
 3. **An example anyone can install, run and modify** to compare an active vesicle with
-   its control: `reproduction` is the first; it needs installation instructions that
-   work outside this machine and a short guide.
+   its control: done, `first_experiment` and the [guide](docs/getting-started.md),
+   checked on fresh machines by the continuous integration, with the library installable
+   for other projects (`find_package(protolife)`).
 4. **Ask researchers of the field** whether it answers a question they have.
 5. Then the rest of the core (molecules and rules, stochastic simulation, observation)
    and the Python layer (`pip install protolife`).

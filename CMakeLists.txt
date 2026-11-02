@@ -27,10 +27,13 @@ add_library(protolife
   src/vesicles_balances.c
   src/vesicles_events.c)
 add_library(protolife::protolife ALIAS protolife)
+include(GNUInstallDirs)
 target_include_directories(protolife PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+set_target_properties(protolife PROPERTIES
+  VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR} WINDOWS_EXPORT_ALL_SYMBOLS ON)
 target_link_libraries(protolife PRIVATE SUNDIALS::cvode)
 if(NOT MSVC)
   target_link_libraries(protolife PUBLIC m)
@@ -60,4 +63,26 @@ endif()
 option(PROTOLIFE_EXAMPLES "Build the examples" ${PROJECT_IS_TOP_LEVEL})
 if(PROTOLIFE_EXAMPLES)
   add_subdirectory(examples)
+endif()
+
+# Installing: the library, its headers, its data and a CMake package, so that another project can use
+# find_package(protolife) and link protolife::protolife. A shared library carries SUNDIALS inside it, so it installs
+# alone: configure with -DBUILD_SHARED_LIBS=ON to install. A static build installs the library and its headers only,
+# since SUNDIALS's static libraries would have to be installed beside it.
+include(CMakePackageConfigHelpers)
+install(TARGETS protolife EXPORT protolifeTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY include/protolife DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
+install(FILES ${PROJECT_BINARY_DIR}/include/protolife/version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/protolife)
+install(DIRECTORY data/networks DESTINATION ${CMAKE_INSTALL_DATADIR}/protolife)
+if(BUILD_SHARED_LIBS)
+  set(PROTOLIFE_DATA_DIR ${CMAKE_INSTALL_DATADIR}/protolife)
+  install(EXPORT protolifeTargets NAMESPACE protolife:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/protolife)
+  configure_package_config_file(cmake/protolifeConfig.cmake.in ${PROJECT_BINARY_DIR}/protolifeConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/protolife PATH_VARS PROTOLIFE_DATA_DIR)
+  write_basic_package_version_file(${PROJECT_BINARY_DIR}/protolifeConfigVersion.cmake COMPATIBILITY SameMinorVersion)
+  install(FILES ${PROJECT_BINARY_DIR}/protolifeConfig.cmake ${PROJECT_BINARY_DIR}/protolifeConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/protolife)
 endif()
