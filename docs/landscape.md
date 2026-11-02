@@ -14,21 +14,31 @@ file exchange, reference checks in CI), never under it.
 
 ## Conclusion
 
-No maintained, permissively licensed library simulates a population of vesicles with
-physical membrane mechanics and internal chemistry. Existing protocell code is either a
-teaching toy or tied to a single paper. The closest published models are worth
-re-implementing as reference tests. For numerics, chemistry identifiers and packaging,
-mature permissive tools exist and protolife should use them instead of hand-written code.
+We have not found a maintained, permissively licensed library that simulates a
+population of vesicles with physical membrane mechanics and an internal chemistry. Close
+neighbours cover parts of it: Virtual Cell (reactions, diffusion and membrane transport in
+cell geometries), FreeDTS (the mechanics of membranes and vesicles), and published
+protocell models with their own code. protolife's possible difference is to join the
+internal chemistry, vesicle mechanics, populations, controls and checkable models in one
+open, composable library; that difference has to be shown by a complete use case and a
+comparison with these tools, not assumed. For numerics, chemistry identifiers and
+packaging, mature permissive tools exist and protolife should use them instead of
+hand-written code.
+
+*Corrected on 2 November 2026: the first version of this page called the niche free;
+a review pointed out Virtual Cell and FreeDTS, added below.*
 
 ## Protocell and origin-of-life simulators
 
 | Tool | What it simulates | Language | License | Last activity | Verdict |
 |---|---|---|---|---|---|
+| [Virtual Cell](https://github.com/virtualcell/vcell) ([Moraru et al. 2008](https://pmc.ncbi.nlm.nih.gov/articles/PMC2711391)) | Reactions, diffusion and membrane transport (fluxes, currents) in cell geometries, deterministic and stochastic; SBML | Java / C++ | MIT according to [Wikipedia](https://en.wikipedia.org/wiki/VCell) (*unverified* in the repository) | maintained | **interoperate** through SBML; the reference to compare a vesicle's transport against |
+| [FreeDTS](https://github.com/weria-pezeshkian/FreeDTS) ([Pezeshkian & Ipsen 2024](https://www.nature.com/articles/s41467-024-44819-w)) | Membrane mechanics at the mesoscale: dynamically triangulated surfaces with inclusions | C++ | *unverified* | 2024 | **interoperate**: real vesicle shapes, where protolife keeps a reduced-volume description; [flippy](https://github.com/flippy-software-package/flippy) (MIT) is a similar package |
 | [Taneja & Higgs 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC12113545/), [`growADE.c`](https://zenodo.org/records/15157714) | Osmotic growth dV/dt = λ·A·ΔC, two leaflets with lipid exchange and flip-flop, division when the area-difference elastic energy drops, bursting, an autocatalytic reaction inside | C | CC-BY-4.0 | 2025-04 | **borrow**: reference case and regression targets; re-implement rather than copy (CC-BY is not a code license) |
 | ENVIRONMENT (Mavelli & Ruiz-Mirazo, [2008](https://pmc.ncbi.nlm.nih.gov/articles/PMC3303737/)–[2013](https://pubs.rsc.org/en/Content/ArticleLanding/2013/IB/C2IB20222K)) | Gillespie with a changing volume; membrane area from lipid count; burst and division bounds on the shape factor; lipid uptake and release; the osmotic synchronisation condition | — | no public code found | papers | **borrow**: stability window, lipid kinetics, analytic stationary size as a test |
 | Villani, Serra et al., [Life 2014](https://pmc.ncbi.nlm.nih.gov/articles/PMC4284470/) | Container growth coupled to a catalytic network of binary strings; division into halves at a threshold | — | no code released (*unverified*) | paper | **borrow**: "generation times synchronise only if an autocatalytic set is coupled to growth" as a property test |
 | [StochPy](https://github.com/SystemsBioinformatics/stochpy) | Gillespie and tau-leap, SBML; a cell-division module with binomial partitioning and lineage vs extant-population views | Python | BSD-3-Clause | 2025-06 | **borrow**: the division and lineage API |
-| [ProtoSim](https://github.com/Piltxi/ProtoSim) | ODE protocell, membrane amount plus internal species, division at a threshold; no osmosis, no units | Python | none stated | 2024-05 | **ignore**: no license; the model comes from Villani & Serra |
+| [ProtoSim](https://github.com/Piltxi/ProtoSim) (perhaps the "Proto-Simulator" a review mentioned; no tool of that exact name was found) | ODE protocell, membrane amount plus internal species, division at a threshold; no osmosis, no units | Python | none stated | 2024-05 | **ignore**: no license; the model comes from Villani & Serra |
 | [lifesimulatoR](https://noushinn.github.io/lifesimulatoR/) | Abundance grows, leaks, divides above a threshold; no membrane | R | MIT | 2026-06 | **ignore**: teaching toy |
 | [ARCHNET](https://github.com/segrelab/string-chemistry) ([paper](https://link.springer.com/article/10.1007/s00239-021-10018-0)) | String chemistries turned into flux-balance models | Python | none stated | 2026-01 | **interoperate**: compare flux-based selection via SBML |
 | [GARD](https://github.com/ModelingOriginsofLife/GARD) | Lipid-world composomes, compositional heredity | MATLAB | none stated | 2014 | **borrow**: the composome similarity idea (exact formula *unverified*) |

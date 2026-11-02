@@ -8,11 +8,11 @@ tested parts (chemistry, compartments, media, protocols, measurements) that anyo
 can assemble to build a candidate living system and test it against a control.
 
 > **Status: pre-alpha.** The library is being extracted from Genesis, a C11 research
-> code that already simulates self-maintaining sugar chemistry inside fatty-acid
-> vesicles, their growth, division and one-bit heredity. The C core has started with
-> its foundation: error reporting and stiff integration over SUNDIALS. The design is in
-> [the landscape of existing tools](docs/landscape.md) and
-> [the architecture](docs/architecture.md). The Python API shown below does not exist yet.
+> code that simulates self-maintaining sugar chemistry inside fatty-acid vesicles,
+> their growth, division and one-bit heredity. The C core now runs that chemistry inside
+> dividing vesicles and reproduces Genesis's results exactly, and a Godot viewer shows
+> the recorded simulations. The design is in [the landscape of existing tools](docs/landscape.md)
+> and [the architecture](docs/architecture.md). The Python API shown below does not exist yet.
 
 ## What it is for
 
@@ -22,47 +22,56 @@ persists *and passes its organisation on* is the open problem. protolife aims to
 anyone explore that problem in physical units, with the bookkeeping that keeps a
 simulation honest.
 
-No existing open library combines these in one engine (see
-[docs/landscape.md](docs/landscape.md)):
+It brings together, in one open library:
 
 - vesicle mechanics in SI units: osmosis, membrane tension, rupture, growth by
   micelle feeding, shear-driven division;
 - a population of compartments with lineage tracking;
-- a stiff chemistry running inside each compartment, deterministic or stochastic;
-- chemistry generated from molecular graphs and reaction rules, with
-  thermochemistry and kinetics;
+- a stiff chemistry running inside each compartment;
 - laboratory protocols: feeding, dilution and shear cycles, dialysis;
-- mechanisms calibrated on published experiments, each with its validity domain.
+- mechanisms calibrated on published experiments, each with its source;
+- recordings of every run, to watch in a viewer.
+
+Some of these exist elsewhere: Virtual Cell simulates reactions, diffusion and membrane
+transport in cell geometries, FreeDTS the mechanics of membranes and vesicles, and
+several published models the growth and division of protocells (see
+[docs/landscape.md](docs/landscape.md)). We have not found them joined in one engine.
+Whether joining them answers questions researchers actually have is still to be shown,
+by a complete use case and a comparison with those tools; that is the roadmap below.
 
 ## Principles
 
 1. **Every mechanism cites its source** and declares the range where it holds.
-   Parameters outside that range are refused, not extrapolated in silence.
-2. **Conservation is checked.** Matter balances close at every step, and the drift is
-   reported.
-3. **A solver that fails says so.** It never returns a silently corrected state.
-4. **Controls are built in.** Every experiment can be rerun without the mechanism
-   under test (a lifeless twin, a random-parent baseline).
+2. **Conservation is checked.** Every brick's tests close its balances of matter (fatty
+   acid, each solute, carbon); checks during each run, with the drift reported, are
+   the next step.
+3. **A solver that fails says so.** It never returns a silently corrected state: a call
+   that fails leaves the simulation as it was and its diagnostic says why.
+4. **Controls are built in.** Every experiment can be rerun without the mechanism under
+   test (a lifeless twin, a random-parent baseline).
 5. **Nothing is programmed to succeed.** No cell, division, heredity or adaptation is
    written as an outcome. A model may produce nothing, and that is a result.
 
-## Planned API
+## Watching a simulation
 
-A sketch of the Python layer, not implemented yet: two lineages of vesicles in one
-dialysis bag, one carrying a self-maintaining chemistry and one without it, through
-eight cycles of feeding and shear.
+The example `reproduction` runs living vesicles through cycles of feeding and shear:
+an E0 core of Genesis's sugar chemistry inside 500 nm oleate vesicles in a dialysis bag
+fed with formaldehyde. With `living=0` the same vesicles hold the same sugars but no
+chemistry runs inside: the control.
 
-```python
-import protolife as pl
-
-bag = pl.Medium.dialysis_bag(food=pl.formaldehyde(0.5))       # mol/L
-living = pl.Vesicles.oleate(radius=600e-9, chemistry=pl.formose.core("carbons"))
-unlit = pl.Vesicles.oleate(radius=420e-9, chemistry=None)
-
-world = pl.World(bag, [living, unlit])
-trace = world.run(pl.Cycles(count=8, period=15 * 60, shear="permanent"))
-trace.plot("sugar_carbon", by="lineage")
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+build/examples/reproduction out=recordings/step-6-random2
+build/examples/reproduction out=recordings/step-6-control living=0
+godot --path viewer                                    # Godot 4.7 or later
 ```
+
+The viewer lists the recordings in `recordings/` and plays them: each seeded vesicle
+and its descendants, the sugars the chemistry makes (orange), the vesicles born of
+micelles, the shear, and the numbers behind them. In the living run each seeded vesicle
+becomes 16 in four cycles and each daughter remakes its sugars; in the control the
+sugars are only shared out, down to a thousandth of the start. Both runs match
+Genesis's recordings of the same experiment frame by frame.
 
 ## Building the C core
 
@@ -80,31 +89,36 @@ What exists today, in C:
 
 - `protolife/diagnostic.h`: every call that can fail returns a status and fills a
   diagnostic with the code of the library underneath, the model time and a message.
-- `protolife/ode.h`: stiff integration by CVODE with event functions. A call that cannot
-  reach its time leaves the state as it was and says why; nothing is clipped. On
+- `protolife/ode.h`: stiff integration by CVODE (SUNDIALS) with event functions. On
   Robertson's stiff chemistry it matches the Genesis integrator it replaces to within
   2.4e-9, in about 80 times fewer steps.
-- `protolife/network.h`: reaction networks with formulas over the whole periodic table,
-  three roles (dynamic, reservoir, implicit), a source for every reaction, a check of the
-  balance of atoms and charge, the mass-action rate law and its Jacobian, read from text
-  (Genesis's `.net` format, see [data/networks](data/networks)).
-- `protolife/reactor.h`: a well-stirred vessel, closed or open (continuous flow), running
-  a network. On the reversible Oregonator (Belousov–Zhabotinsky) it matches Genesis to
-  within 6.2e-10 over 60 s of oscillations.
+- `protolife/rodas.h`: RODAS3, a Rosenbrock method that iterates nothing, for models
+  with kinks where a Newton iteration stalls (the vesicles).
+- `protolife/network.h` and `protolife/reactor.h`: reaction networks read from text, with
+  a check of the balance of atoms and charge, run in a closed or flow-through vessel.
+  On the reversible Oregonator they match Genesis to within 6.2e-10.
+- `protolife/vesicles.h`: fatty acid vesicles with a network running inside each one.
+- `protolife/protocol.h`: cycles of dilution, feeding and shear.
+- `protolife/scene.h`: recordings for the viewer in [viewer/](viewer).
+- [data/networks](data/networks): the reversible Oregonator and the five E0 cores of
+  Genesis's formose chemistry, exported from Genesis.
 
 ## Roadmap
 
-1. **Landscape of existing tools**: done, see [docs/landscape.md](docs/landscape.md).
-2. **C11 core** (in progress): the general bricks behind a stable C API, with
-   regression tests against the Genesis results they come from. Done: diagnostics,
-   stiff integration, reaction networks, the well-stirred reactor. Next: molecules and
-   rules (the chemistry that builds networks), vesicles, media and protocols,
-   stochastic simulation, observation.
-3. **Python layer**: `pip install protolife`, with the example above as the first
-   working script.
-4. **Documentation and a catalogue of calibrated worlds**, plus reference tests
-   against published protocell models.
+1. **Guarantees of conservation during each run**: balances of fatty acid, of each
+   solute and of each element checked as the simulation goes, a drift beyond tolerance
+   stopping it with its diagnostic.
+2. **Reproduce a published model quantitatively**: Taneja and Higgs 2025 (an
+   autocatalytic reaction driving osmotic growth and division), with its regression
+   targets as tests.
+3. **An example anyone can install, run and modify** to compare an active vesicle with
+   its control: `reproduction` is the first; it needs installation instructions that
+   work outside this machine and a short guide.
+4. **Ask researchers of the field** whether it answers a question they have.
+5. Then the rest of the core (molecules and rules, stochastic simulation, observation)
+   and the Python layer (`pip install protolife`).
 
 ## License
 
-BSD 3-Clause, see [LICENSE](LICENSE).
+BSD 3-Clause, see [LICENSE](LICENSE). The viewer's fonts are under the SIL Open Font
+License ([viewer/assets/fonts](viewer/assets/fonts)).
