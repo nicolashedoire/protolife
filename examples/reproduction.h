@@ -20,6 +20,7 @@ typedef struct {
     long frames;
     double every, dt;
     pl_cycles cycles;
+    int twins;  /* 1: the seeded vesicles hold fresh medium too, the twins of the fresh ones (a neutral control) */
 } options;
 
 typedef struct {

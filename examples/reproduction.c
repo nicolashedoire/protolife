@@ -6,7 +6,7 @@
  * equivalent of micelles and shears the vessel. With living=0 no vesicle reacts: the control.
  *
  *   reproduction [key=value ...]
- *     network=data/networks/e0-random2.net out=recordings/step-6-random2 name=random2 living=1
+ *     network=data/networks/e0-random2.net out=recordings/step-6-random2 name=random2 living=1 seed=core|fresh
  *     radius=500 (nm) acid=3 (mM) seeded=0.9 small=2.9e-8 (cm/s) food=0.5 (M) renewal=0.05 (1/s)
  *     cycles=4 period=900 micelles=1 feeds=1 interval=60 shear=20 stirred=1 start=3600 dilution=0.5
  *     frames=361 every=10 dt=0.5
@@ -20,7 +20,7 @@
 
 static void parse(int argc, char **argv, options *o) {
     *o = (options){"data/networks/e0-random2.net", "recordings/step-6-random2", "random2", 1, 500e-9, 3e-3, 0.9,
-                   2.9e-10, 0.5, 5e-2, 361, 10.0, 0.5, {4, 3600.0, 900.0, 0.5, 1.0, 1, 60.0, 20.0, 1}};
+                   2.9e-10, 0.5, 5e-2, 361, 10.0, 0.5, {4, 3600.0, 900.0, 0.5, 1.0, 1, 60.0, 20.0, 1}, 0};
     for (int i = 1; i < argc; i++) {
         const char *eq = strchr(argv[i], '=');
         if (eq == NULL) continue;
@@ -32,6 +32,7 @@ static void parse(int argc, char **argv, options *o) {
         else if (IS("out")) o->out = v;
         else if (IS("name")) o->name = v;
         else if (IS("living")) o->living = (int)x;
+        else if (IS("seed")) o->twins = strcmp(v, "fresh") == 0;
         else if (IS("radius")) o->radius = x * 1e-9;
         else if (IS("acid")) o->acid = x * 1e-3;
         else if (IS("seeded")) o->seeded = x;
@@ -81,7 +82,7 @@ static pl_status seed(world *w, pl_diagnostic *d) {
     fresh[pl_vesicles_species_of(w->p, w->food)] = o->food;
     double volume = 4.0 / 3.0 * PI * pow(o->radius * sqrt(1.0 - EXCESS), 3.0);
     double molecules = pl_vesicle_molecules_for_radius(&k, o->radius);
-    filled(w, core, volume, inside);
+    filled(w, o->twins ? fresh : core, volume, inside);  /* twins: the seeded lineage holds fresh medium too */
     pl_status status = pl_vesicles_add(w->p, o->acid * o->seeded * AVOGADRO / molecules, molecules, inside, SEEDED, NULL, d);
     filled(w, fresh, volume, inside);
     if (status == PL_OK)

@@ -136,7 +136,7 @@ static void values(const world *w, float *out) {
         out[at++] = (float)(sqrt(t.area[g] / t.count[g] / (4.0 * PI)) * 1e9);
         out[at++] = (float)(t.volume[g] / t.sphere[g]);
         out[at++] = (float)(t.tension[g] / t.count[g] * 1000.0);
-        out[at++] = (float)(t.held[g] / t.count[g] / w->held0);
+        out[at++] = (float)(w->held0 > 0.0 ? t.held[g] / t.count[g] / w->held0 : NAN);
         out[at++] = (float)(t.held[g] / (t.volume[g] * 1000.0));
         out[at++] = (float)(t.acid[g] / membranes);
     }
