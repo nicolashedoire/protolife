@@ -115,6 +115,9 @@ Its options are written `key=value`:
 | `micelles=`, `feeds=` | `1`, `1` | equivalents of membrane fed per cycle, and in how many doses |
 | `stirred=`, `shear=` | `1`, `20` | shear all along (1) or at two thirds of each cycle (0), and its rate (1/s) |
 | `start=`, `dilution=` | `3600`, `0.5` | installation before the first cycle (s), and share of the bag renewed per cycle |
+| `seed=` | `core` | `fresh`: the seeded vesicles hold fresh medium too, the twins of the others (a neutral control) |
+| `stop=` | `0` | `1`: the seeded vesicles' chemistry stops at the first cycle; they keep what it made |
+| `vesicles=`, `draw=` | `0`, `1` | a finite bag holding that many seeded vesicles, its dilutions drawn at random with that seed; `0` follows the mean |
 
 ## 6. Your own chemistry
 
