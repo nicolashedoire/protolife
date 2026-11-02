@@ -72,6 +72,15 @@ build/examples/reproduction out=recordings/step-6-control living=0
 godot --path viewer                                    # Godot 4.7 or later
 ```
 
+The example `capsule` records one protocell of Taneja and Higgs (2025): its membrane
+stretching into a capsule as its chemistry swells it, then dividing when its elastic
+energy drops (`rflip=0.01` for very unequal daughters, `rflip=0.2` for none at all,
+`equal=1` for halves):
+
+```sh
+build/examples/capsule out=recordings/capsule-rflip-0.1
+```
+
 The viewer lists the recordings in `recordings/` and plays them: each seeded vesicle
 and its descendants, the sugars the chemistry makes (orange), the vesicles born of
 micelles, the shear, and the numbers behind them. In the living run each seeded vesicle

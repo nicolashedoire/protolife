@@ -60,6 +60,8 @@ func _open(path: String) -> void:
 		view = VesiclesView.new(recording)
 	elif recording.kind == "lineage":
 		view = LineageView.new(recording)
+	elif recording.kind == "capsule":
+		view = CapsuleView.new(recording)
 	else:
 		view = WorldView.new(recording, str(_options.get("field", "")))
 	add_child(view)

@@ -21,6 +21,8 @@ pl_status pl_scene_create(const char *kind, const char *title, const char *subti
                           pl_scene **scene, pl_diagnostic *diagnostic);
 /* A square grid of n x n cells over `box` metres, for fields (1 and 0 for a recording without fields: the default). */
 pl_status pl_scene_set_grid(pl_scene *scene, int n, double box, pl_diagnostic *diagnostic);
+/* The unit of the frames' times ("s" by default; "time units" for a dimensionless model). */
+pl_status pl_scene_set_time_unit(pl_scene *scene, const char *unit, pl_diagnostic *diagnostic);
 /* A number of each frame: a stable key ("r0_radius"), a label for the screen and a unit. */
 pl_status pl_scene_add_value(pl_scene *scene, const char *key, const char *label, const char *unit,
                              pl_diagnostic *diagnostic);

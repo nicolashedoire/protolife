@@ -103,7 +103,7 @@ func _show(index: int) -> void:
 	_slider.set_value_no_signal(current)
 	var frame := recording.frame(current)
 	var total := recording.frame(_count - 1)
-	_time.text = "%s / %s" % [Look.duration(frame.time if frame else NAN), Look.duration(total.time if total else NAN)]
+	_time.text = "%s / %s" % [Look.time(frame.time if frame else NAN, recording.time_unit), Look.time(total.time if total else NAN, recording.time_unit)]
 	frame_changed.emit(current)
 
 

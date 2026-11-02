@@ -1,11 +1,11 @@
-foreach(name oregonator robertson)
+foreach(name oregonator robertson capsule)
   add_executable(example_${name} ${name}.c)
   set_target_properties(example_${name} PROPERTIES OUTPUT_NAME ${name})
 endforeach()
 add_executable(example_reproduction reproduction.c reproduction_scene.c)
 set_target_properties(example_reproduction PROPERTIES OUTPUT_NAME reproduction)
 
-foreach(name oregonator robertson reproduction)
+foreach(name oregonator robertson reproduction capsule)
   target_link_libraries(example_${name} PRIVATE protolife protolife_warnings)
   target_compile_definitions(example_${name} PRIVATE PROTOLIFE_DATA="${PROJECT_SOURCE_DIR}/data")
 endforeach()

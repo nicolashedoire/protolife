@@ -29,7 +29,7 @@ typedef struct {
 } quantities;
 
 struct pl_scene {
-    char *kind, *title, *subtitle, *source;
+    char *kind, *title, *subtitle, *source, *time_unit;
     int n;
     double box;
     quantities values, fields, constants;
@@ -53,7 +53,7 @@ static void free_quantities(quantities *q) {
 void pl_scene_free(pl_scene *s) {
     if (s == NULL) return;
     if (s->frames != NULL) fclose(s->frames);
-    free(s->kind), free(s->title), free(s->subtitle), free(s->source);
+    free(s->kind), free(s->title), free(s->subtitle), free(s->source), free(s->time_unit);
     free_quantities(&s->values), free_quantities(&s->fields), free_quantities(&s->constants);
     free(s);
 }
@@ -67,7 +67,8 @@ pl_status pl_scene_create(const char *kind, const char *title, const char *subti
     if (s == NULL) return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, NAN, "the scene could not be allocated");
     s->n = 1;
     s->kind = copy_text(kind), s->title = copy_text(title), s->subtitle = copy_text(subtitle), s->source = copy_text(source);
-    if (s->kind == NULL || s->title == NULL || s->subtitle == NULL || s->source == NULL) {
+    s->time_unit = copy_text("s");
+    if (s->kind == NULL || s->title == NULL || s->subtitle == NULL || s->source == NULL || s->time_unit == NULL) {
         pl_scene_free(s);
         return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, NAN, "the scene could not be allocated");
     }
@@ -80,6 +81,17 @@ pl_status pl_scene_set_grid(pl_scene *s, int n, double box, pl_diagnostic *diagn
     if (s == NULL || s->frames != NULL || n < 1 || !(box >= 0.0) || !isfinite(box))
         return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "a grid of at least one cell, before the scene is opened");
     s->n = n, s->box = box;
+    pl_succeed(diagnostic);
+    return PL_OK;
+}
+
+pl_status pl_scene_set_time_unit(pl_scene *s, const char *unit, pl_diagnostic *diagnostic) {
+    if (s == NULL || unit == NULL || *unit == '\0' || s->frames != NULL)
+        return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "a time unit, before the scene is opened");
+    char *copy = copy_text(unit);
+    if (copy == NULL) return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, NAN, "no memory for the time unit");
+    free(s->time_unit);
+    s->time_unit = copy;
     pl_succeed(diagnostic);
     return PL_OK;
 }
@@ -186,7 +198,9 @@ pl_status pl_scene_open(pl_scene *s, const char *directory, pl_diagnostic *diagn
     json_string(out, s->subtitle);
     fputs(",\n  \"source\": ", out);
     json_string(out, s->source);
-    fprintf(out, ",\n  \"grid\": {\"n\": %d, \"box_m\": %.17g},\n  \"time_unit\": \"s\",\n", s->n, s->box);
+    fprintf(out, ",\n  \"grid\": {\"n\": %d, \"box_m\": %.17g},\n  \"time_unit\": ", s->n, s->box);
+    json_string(out, s->time_unit);
+    fputs(",\n", out);
     fprintf(out, "  \"frame_bytes\": %ld,\n  \"frame_layout\": \"float64 time, float32 values, float32 fields x cells\",\n",
             bytes);
     write_quantities(out, "values", &s->values, 0);

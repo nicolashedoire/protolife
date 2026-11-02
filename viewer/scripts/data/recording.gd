@@ -12,6 +12,7 @@ var kind: String = ""
 var title: String = ""
 var subtitle: String = ""
 var source: String = ""
+var time_unit: String = "s"
 var n: int = 1
 var box: float = 0.0
 var frame_bytes: int = 0
@@ -41,6 +42,7 @@ func open(path: String) -> bool:
 	title = str(manifest.get("title", ""))
 	subtitle = str(manifest.get("subtitle", ""))
 	source = str(manifest.get("source", ""))
+	time_unit = str(manifest.get("time_unit", "s"))
 	frame_bytes = int(manifest.get("frame_bytes", 0))
 	var grid: Dictionary = manifest.get("grid", {})
 	n = int(grid.get("n", 1))

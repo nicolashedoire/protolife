@@ -1,7 +1,7 @@
 class_name Look
 extends RefCounted
 ## The look of the viewer: the colours and fonts of the Genesis lab's screens (where protolife comes from), the
-## panels and labels built from them, and numbers written the French way.
+## panels and labels built from them, and the way numbers are written.
 
 const BACKGROUND := Color8(243, 245, 248)
 const PANEL := Color8(255, 255, 255)
@@ -144,6 +144,13 @@ static func moles(value: float, suffix: String = "") -> String:
 
 
 ## A simulated duration: "1 h 28 min", "42 s", "3 j 4 h".
+## A time in its recording's unit: hours, minutes and seconds for "s", the number and the unit otherwise.
+static func time(value: float, unit: String) -> String:
+	if unit == "s" or is_nan(value):
+		return duration(value)
+	return "%s %s" % [significant(value, 4) if value < 1000.0 else str(int(round(value))), unit]
+
+
 static func duration(seconds: float) -> String:
 	if is_nan(seconds):
 		return "—"

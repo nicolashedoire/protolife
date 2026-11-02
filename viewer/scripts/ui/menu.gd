@@ -90,7 +90,7 @@ func _card(recording: Recording, name: String) -> Control:
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_theme_constant_override("separation", 6)
 	card.add_child(column)
-	var kinds := {"vessel": "VESSEL", "vesicles": "VESICLES", "lineage": "VESICLE LINEAGE", "world": "ORIGIN WORLD"}
+	var kinds := {"vessel": "VESSEL", "vesicles": "VESICLES", "lineage": "VESICLE LINEAGE", "world": "ORIGIN WORLD", "capsule": "PROTOCELL"}
 	var kind := str(kinds.get(recording.kind, recording.kind.to_upper()))
 	column.add_child(Look.label(kind + " · " + name, 12, Look.PRIMARY if recording.kind == "world" else Look.LIVING_TEXT, "bold"))
 	column.add_child(Look.label(recording.title, 22, Look.INK, "title"))
@@ -99,7 +99,7 @@ func _card(recording: Recording, name: String) -> Control:
 	column.add_child(subtitle)
 	var count := recording.frame_count()
 	var last := recording.frame(count - 1)
-	var span := Look.duration(last.time) if last != null else "—"
+	var span := Look.time(last.time, recording.time_unit) if last != null else "—"
 	column.add_child(Look.label("%d frames · %s simulated" % [count, span], 13, Look.MUTED, "medium"))
 	for child: Node in column.get_children():
 		(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
