@@ -1,5 +1,7 @@
 # protolife
 
+![Illustration of protocell vesicles and prebiotic chemistry](docs/images/protolife-cover.png)
+
 **Building blocks for synthetic life, in simulation.** protolife is meant to be to
 protocells what a neural-network library is to deep learning: a set of composable,
 tested parts (chemistry, compartments, media, protocols, measurements) that anyone
