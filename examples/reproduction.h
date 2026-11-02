@@ -21,6 +21,7 @@ typedef struct {
     double every, dt;
     pl_cycles cycles;
     int twins;  /* 1: the seeded vesicles hold fresh medium too, the twins of the fresh ones (a neutral control) */
+    int stop;   /* 1: the seeded lineage's chemistry stops at the first cycle: it keeps what it made, remakes nothing */
 } options;
 
 typedef struct {
