@@ -1,7 +1,7 @@
 #ifndef PROTOLIFE_EXAMPLE_REPRODUCTION_H
 #define PROTOLIFE_EXAMPLE_REPRODUCTION_H
 
-/* The world of the reproduction example (reproduction.c) and its recording (reproduction_scene.c). */
+/* The world of the reproduction example (reproduction.c, reproduction_world.c) and its recording (reproduction_scene.c). */
 #include "protolife/protolife.h"
 
 #define PI 3.14159265358979323846
@@ -34,6 +34,12 @@ typedef struct {
     double count0, held0, membranes0, total0;  /* a seeded vesicle at the first cycle, and the fatty acid then */
 } world;
 
+/* The defaults of the options (reproduction.c tells them); the world built from its options, and installed up to its
+ * first cycle; its memory given back (reproduction_world.c). */
+options defaults(void);
+pl_status build(world *w, pl_diagnostic *diagnostic);
+pl_status install(world *w, pl_diagnostic *diagnostic);
+void dismantle(world *w);
 /* The manifest of the recording; then the frames, running the world and its cycles. */
 pl_status describe(const world *w, pl_scene **scene, pl_diagnostic *diagnostic);
 pl_status record(world *w, pl_scene *scene, pl_diagnostic *diagnostic);
@@ -41,5 +47,7 @@ pl_status record(world *w, pl_scene *scene, pl_diagnostic *diagnostic);
  * for record -1. */
 pl_status step(world *w, pl_diagnostic *diagnostic);
 double sugar_carbon(const world *w, int record);
+/* Fatty acid (mol/L of the vessel) in the vesicles of a label, all its records together. */
+double fatty_acid_of(const world *w, int label);
 
 #endif

@@ -2,7 +2,7 @@ foreach(name oregonator robertson capsule first_experiment)
   add_executable(example_${name} ${name}.c)
   set_target_properties(example_${name} PROPERTIES OUTPUT_NAME ${name})
 endforeach()
-add_executable(example_reproduction reproduction.c reproduction_scene.c)
+add_executable(example_reproduction reproduction.c reproduction_world.c reproduction_scene.c)
 set_target_properties(example_reproduction PROPERTIES OUTPUT_NAME reproduction)
 
 foreach(name oregonator robertson reproduction capsule first_experiment)
