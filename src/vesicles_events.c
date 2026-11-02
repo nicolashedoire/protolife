@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "random_internal.h"
 #include "vesicles_internal.h"
 
 /* A vesicle past its rupture tension lets a share of everything inside out, until its tension is back at the rupture
@@ -127,17 +128,35 @@ void pl_vesicles_come_apart(pl_vesicles *p) {
 
 /* A share of every record, its micelles and the pools leaves, counted as washed; what left inside vesicles counts as
  * leaving the renewal's ledger. */
+/* A record emptied by the draws of a finite bag: taken out, as a vesicle coming apart is, with nothing left to move. */
+static void remove_record(pl_vesicles *p, int r) {
+    for (int q = r; q + 1 < p->records; q++) {
+        p->record[q] = p->record[q + 1];
+        double *to = pl_inside(p, q), *from = pl_inside(p, q + 1);
+        for (int s = 0; s < p->solutes; s++) to[s] = from[s];
+    }
+    p->records--;
+    if (p->nursery == r) p->nursery = -1;
+    else if (p->nursery > r) p->nursery--;
+}
+
 static void take_out(pl_vesicles *p, double share) {
-    double kept = 1.0 - share;
     for (int r = 0; r < p->records; r++) {
         record_t *v = &p->record[r];
         const double *own = pl_inside(p, r);
-        p->washed += share * (v->count * v->molecules / PL_AVOGADRO + v->coat + v->intermediate);
-        for (int s = 0; s < p->solutes; s++) p->renewed[s] -= share * v->count * own[s];
-        v->count *= kept, v->coat *= kept, v->intermediate *= kept;
+        double gone = share;  /* in a finite bag, the share of this record's vesicles drawn out */
+        if (p->bag > 0.0) {
+            long long n = llround(v->count * p->bag), kept = pl_binomial(&p->draw, n, 1.0 - share);
+            gone = n > 0 ? 1.0 - (double)kept / (double)n : 1.0;
+        }
+        p->washed += gone * (v->count * v->molecules / PL_AVOGADRO + v->coat + v->intermediate);
+        for (int s = 0; s < p->solutes; s++) p->renewed[s] -= gone * v->count * own[s];
+        v->count *= 1.0 - gone, v->coat *= 1.0 - gone, v->intermediate *= 1.0 - gone;
     }
+    for (int r = p->records - 1; r >= 0; r--)
+        if (!(p->record[r].count > 0.0)) remove_record(p, r);
     p->washed += share * (p->forming + p->newborn);
-    p->forming *= kept, p->newborn *= kept;
+    p->forming *= 1.0 - share, p->newborn *= 1.0 - share;
 }
 
 /* The vesicles that left with the stream over dt, after the step (the medium's renewal is in the step). */

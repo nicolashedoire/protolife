@@ -201,6 +201,38 @@ static void test_conservation_refused(void) {
     pl_vesicles_free(p);
 }
 
+/* A finite bag: twin records lose whole vesicles at random at each dilution, so they drift apart by chance; on
+ * average each keeps the share; a record drawn empty is taken out. */
+static void test_bag(void) {
+    pl_vesicle_constants k = pl_vesicle_oleate();
+    double molecules = pl_vesicle_molecules_for_radius(&k, 100e-9), litres = 1e-12, kept[2] = {0.0, 0.0};
+    int differ = 0;
+    for (uint64_t draw = 1; draw <= 40; draw++) {
+        pl_vesicles *p = NULL;
+        CHECK(pl_vesicles_create(&k, 0, &p, NULL) == PL_OK);
+        CHECK(pl_vesicles_add(p, 64.0 / litres, molecules, NULL, 1, NULL, NULL) == PL_OK);  /* 64 vesicles in the bag */
+        CHECK(pl_vesicles_add(p, 64.0 / litres, molecules, NULL, 2, NULL, NULL) == PL_OK);  /* and their 64 twins */
+        CHECK(pl_vesicles_set_bag(p, litres, draw, NULL) == PL_OK);
+        pl_vesicles_dilute(p, 0.5);
+        double a = pl_vesicles_record(p, 0).count * litres, b = pl_vesicles_record(p, 1).count * litres;
+        CHECK(fabs(a - llround(a)) < 1e-6 && fabs(b - llround(b)) < 1e-6);  /* whole vesicles */
+        differ += llround(a) != llround(b);
+        kept[0] += a, kept[1] += b;
+        pl_vesicles_free(p);
+    }
+    CHECK(differ > 20);                                             /* chance separates twins */
+    CHECK(fabs(kept[0] / 40.0 - 32.0) < 3.0 && fabs(kept[1] / 40.0 - 32.0) < 3.0);  /* half kept on average */
+    pl_vesicles *p = NULL;
+    CHECK(pl_vesicles_create(&k, 0, &p, NULL) == PL_OK);
+    CHECK(pl_vesicles_add(p, 1.0 / litres, molecules, NULL, 1, NULL, NULL) == PL_OK);  /* one vesicle */
+    CHECK(pl_vesicles_add(p, 1000.0 / litres, molecules, NULL, 2, NULL, NULL) == PL_OK);
+    CHECK(pl_vesicles_set_bag(p, litres, 7, NULL) == PL_OK);
+    for (int i = 0; i < 20 && pl_vesicles_records(p) == 2; i++) pl_vesicles_dilute(p, 0.5);
+    CHECK(pl_vesicles_records(p) == 1 && pl_vesicles_find(p, 1) == -1 && pl_vesicles_find(p, 2) == 0);
+    CHECK(pl_vesicles_advance(p, 1.0, NULL) == PL_OK);  /* and the bag goes on */
+    pl_vesicles_free(p);
+}
+
 static void test_arguments(void) {
     pl_vesicle_constants k = pl_vesicle_oleate(), bad = k;
     bad.cvc = -1.0;
@@ -223,6 +255,7 @@ int main(void) {
     test_growth_and_division();
     test_chemistry_inside();
     test_conservation_refused();
+    test_bag();
     test_arguments();
     return check_report("vesicles");
 }

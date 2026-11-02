@@ -5,6 +5,7 @@
 
 #include "capsule_internal.h"
 #include "diagnostic_internal.h"
+#include "random_internal.h"
 
 #define PI 3.14159265358979323846
 #define AVOGADRO 6.02e23  /* the value of the authors' program, for their Q = 0.0249 */
@@ -29,13 +30,7 @@ pl_capsule_parameters pl_capsule_taneja_higgs(void) {
                                    .beta = 0.375, .burst_area = 1.1, .burst_kept = 0.9, .largest = 2000.0};
 }
 
-/* splitmix64, then 53 bits: a uniform number in [0, 1), the same on every platform. */
-static double uniform(pl_capsule *c) {
-    uint64_t z = (c->random += 0x9E3779B97F4A7C15ULL);
-    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
-    z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
-    return (double)((z ^ (z >> 31)) >> 11) * 0x1.0p-53;
-}
+static double uniform(pl_capsule *c) { return pl_uniform(&c->random); }
 
 void pl_capsule_free(pl_capsule *c) {
     if (c == NULL) return;

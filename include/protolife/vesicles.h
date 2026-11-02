@@ -1,6 +1,8 @@
 #ifndef PROTOLIFE_VESICLES_H
 #define PROTOLIFE_VESICLES_H
 
+#include <stdint.h>
+
 #include "protolife/balance.h"
 #include "protolife/diagnostic.h"
 #include "protolife/network.h"
@@ -145,6 +147,11 @@ pl_status pl_vesicles_set_washout(pl_vesicles *population, double rate, pl_diagn
 void pl_vesicles_set_lifeless(pl_vesicles *population, int lifeless);
 /* The oil layer: mol of anhydride per litre of the vessel, and what is poured on it (mol/L/s). */
 pl_status pl_vesicles_set_anhydride(pl_vesicles *population, double amount, double feed, pl_diagnostic *diagnostic);
+/* A finite bag of `litres`, holding count x litres vesicles of each record (rounded): from then on a dilution or a
+ * washout takes whole vesicles out at random (binomially, each one leaving with the share diluted), so that lineages
+ * drift by chance as in a real bag; a record left with none is taken out. Divisions and births stay deterministic.
+ * 0 litres: the mean field, every record losing exactly the share (the default). `seed` starts the draws. */
+pl_status pl_vesicles_set_bag(pl_vesicles *population, double litres, uint64_t seed, pl_diagnostic *diagnostic);
 /* The relative tolerance of the integration (default 1e-8). */
 pl_status pl_vesicles_set_tolerance(pl_vesicles *population, double relative, pl_diagnostic *diagnostic);
 
@@ -153,7 +160,8 @@ pl_status pl_vesicles_advance(pl_vesicles *population, double dt, pl_diagnostic 
 /* Micelles of `amount` mol/L of fatty acid fed to the medium: coat, intermediate and new vesicles. */
 void pl_vesicles_feed_micelles(pl_vesicles *population, double amount);
 /* A share of everything but the oil layer replaced at once by fresh medium: vesicles and micelles leave (counted as
- * washed), the medium's solutes and monomer are renewed. */
+ * washed), the medium's solutes and monomer are renewed. In a finite bag (pl_vesicles_set_bag) the vesicles that
+ * leave are drawn at random, whole, record by record. */
 void pl_vesicles_dilute(pl_vesicles *population, double share);
 /* Ruptures now, for a change of the medium made between steps. */
 void pl_vesicles_rupture(pl_vesicles *population);

@@ -501,6 +501,12 @@ pl_status pl_vesicles_set_anhydride(pl_vesicles *p, double amount, double feed, 
     return status;
 }
 
+pl_status pl_vesicles_set_bag(pl_vesicles *p, double litres, uint64_t seed, pl_diagnostic *diagnostic) {
+    pl_status status = value_check(p, litres, diagnostic);
+    if (status == PL_OK) p->bag = litres, p->draw = seed;
+    return status;
+}
+
 pl_status pl_vesicles_set_tolerance(pl_vesicles *p, double relative, pl_diagnostic *diagnostic) {
     if (p == NULL || !(relative > 0.0) || !(relative < 1.0))
         return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the tolerance must lie between 0 and 1");

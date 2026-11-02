@@ -1,6 +1,8 @@
 #ifndef PROTOLIFE_VESICLES_INTERNAL_H
 #define PROTOLIFE_VESICLES_INTERNAL_H
 
+#include <stdint.h>
+
 #include "protolife/vesicles.h"
 
 #define PL_PI 3.14159265358979323846
@@ -48,6 +50,8 @@ struct pl_vesicles {
     pl_vesicle_shape *shape;               /* per record */
     double *work;                          /* 3 x state size: the Jacobian's shifted states, during a call */
     double fed;                            /* mol/L of fatty acid fed as micelles since the start */
+    double bag;                            /* L of a finite bag whose dilutions draw whole vesicles; 0: mean field */
+    uint64_t draw;                         /* the state of those draws */
     /* the balances checked at every step */
     double conservation;                   /* the largest relative change a step may make */
     pl_balance *balance;
