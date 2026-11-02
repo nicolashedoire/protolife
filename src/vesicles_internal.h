@@ -50,7 +50,7 @@ struct pl_vesicles {
     double fed;                            /* mol/L of fatty acid fed as micelles since the start */
     /* the balances checked at every step */
     double conservation;                   /* the largest relative change a step may make */
-    pl_vesicle_balance *balance;
+    pl_balance *balance;
     int balances, *balance_kind, *balance_index;  /* kind: 0 fatty acid, 1 a solute, 2 an element */
     double *before, *after, *scale, *scale_after;  /* per balance, during a call */
     /* the state before a step, to undo it */

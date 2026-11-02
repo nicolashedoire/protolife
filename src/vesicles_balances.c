@@ -18,7 +18,7 @@ void pl_vesicles_free_balances(pl_vesicles *p) {
 
 static int add_balance(pl_vesicles *p, const char *name, int kind, int index) {
     int b = p->balances++;
-    p->balance[b] = (pl_vesicle_balance){name, 0.0, 0.0};
+    p->balance[b] = (pl_balance){name, 0.0, 0.0};
     p->balance_kind[b] = kind, p->balance_index[b] = index;
     return b;
 }

@@ -164,7 +164,7 @@ static void test_chemistry_inside(void) {
     after = carbon(p, net, &renewed);
     CHECK_CLOSE(after - renewed, carbon0, 1e-9);
     /* the balances checked at every step: the fatty acid, the buffer, carbon; not hydrogen or oxygen (water) */
-    const pl_vesicle_balance *b;
+    const pl_balance *b;
     int balances = pl_vesicles_balances(p, &b), found = 0;
     for (int i = 0; i < balances; i++) {
         found |= (strcmp(b[i].name, "fatty acid") == 0) | (strcmp(b[i].name, "bicine") == 0) << 1 |
@@ -195,7 +195,7 @@ static void test_conservation_refused(void) {
     CHECK(pl_vesicles_record(p, 0).molecules == v.molecules && pl_vesicles_records(p) == records);
     CHECK(pl_vesicles_set_conservation(p, 1e-9, &d) == PL_OK);
     CHECK(pl_vesicles_advance(p, 5.0, &d) == PL_OK);  /* and it goes on with a sound limit */
-    const pl_vesicle_balance *b;
+    const pl_balance *b;
     CHECK(pl_vesicles_balances(p, &b) == 2 && strcmp(b[0].name, "fatty acid") == 0 && strcmp(b[1].name, "buffer") == 0);
     CHECK(pl_vesicles_ledger(p).fed > 0.0);
     pl_vesicles_free(p);

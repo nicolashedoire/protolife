@@ -49,6 +49,8 @@ by a complete use case and a comparison with those tools; that is the roadmap be
    changes one by more than a billionth of its size is undone and the call fails,
    naming the balance; smaller changes add up in a drift anyone can read. Over the two
    hours of the step-6 run, the three balances drift by less than 1e-12 of their size.
+   The well-stirred reactor does the same for each element its network conserves, with
+   what the feed brought in and the outflow took away.
 3. **A solver that fails says so.** It never returns a silently corrected state: a call
    that fails leaves the simulation as it was and its diagnostic says why.
 4. **Controls are built in.** Every experiment can be rerun without the mechanism under
@@ -109,8 +111,8 @@ What exists today, in C:
 
 ## Roadmap
 
-1. **Guarantees of conservation during each run**: done for vesicle populations (see
-   principle 2); the well-stirred reactor is next.
+1. **Guarantees of conservation during each run**: done for vesicle populations and the
+   well-stirred reactor (see principle 2).
 2. **Reproduce a published model quantitatively**: Taneja and Higgs 2025 (an
    autocatalytic reaction driving osmotic growth and division), with its regression
    targets as tests.

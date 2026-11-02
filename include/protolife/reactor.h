@@ -1,6 +1,7 @@
 #ifndef PROTOLIFE_REACTOR_H
 #define PROTOLIFE_REACTOR_H
 
+#include "protolife/balance.h"
 #include "protolife/diagnostic.h"
 #include "protolife/network.h"
 #include "protolife/ode.h"
@@ -11,6 +12,11 @@
  * when `dilution` > 0: every dynamic species then also flows out at dilution * [S] and comes in at
  * dilution * feed[S]. Reservoir and implicit species stay exactly at their fixed concentrations. Concentrations in
  * mol/L, time in s.
+ *
+ * Every call of pl_reactor_advance checks the balance of each element the network conserves (pl_network_conserves):
+ * the atoms its dynamic species hold, less those the feed brought in, plus those the outflow took away. A call that
+ * changes one by more than `conservation` times the size of its terms (default 1e-9) is undone and fails with
+ * PL_ERROR_CONSERVATION.
  */
 
 typedef struct pl_reactor pl_reactor;
@@ -35,6 +41,9 @@ double pl_reactor_time(const pl_reactor *reactor);
 /* The concentration of every species (mol/L), owned by the reactor and valid until it is freed. */
 const double *pl_reactor_molar(const pl_reactor *reactor);
 void pl_reactor_get_statistics(const pl_reactor *reactor, pl_ode_statistics *statistics);
+/* The balances checked (one per conserved element): their number, and the list in *balances. */
+int pl_reactor_balances(const pl_reactor *reactor, const pl_balance **balances);
+pl_status pl_reactor_set_conservation(pl_reactor *reactor, double relative, pl_diagnostic *diagnostic);
 void pl_reactor_free(pl_reactor *reactor);
 
 #endif

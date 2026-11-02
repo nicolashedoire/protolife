@@ -1,5 +1,6 @@
 /* The well-stirred reactor (protolife/reactor.h): exact solutions, an open tank, and Genesis's Oregonator. */
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "check.h"
@@ -49,6 +50,10 @@ static void test_open_tank(void) {
     CHECK(pl_reactor_set_molar(r, 2, 0.0, NULL) == PL_OK);  /* no catalyst: A only flows */
     CHECK(pl_reactor_advance(r, 200.0, NULL) == PL_OK);
     CHECK_CLOSE(pl_reactor_molar(r)[0], 1e-3, 1e-6);
+    /* carbon, hydrogen and oxygen balanced with what flowed in and out; iron is the reservoir's */
+    const pl_balance *b;
+    CHECK(pl_reactor_balances(r, &b) == 3 && strcmp(b[0].name, "H") == 0 && strcmp(b[1].name, "C") == 0);
+    for (int e = 0; e < 3; e++) CHECK(fabs(b[e].drift) < 1e-15);
     pl_reactor_free(r);
     pl_network_free(net);
 }
@@ -77,6 +82,29 @@ static void test_oregonator(void) {
             CHECK_CLOSE(pl_reactor_molar(r)[s], GENESIS_OREGONATOR[k][1 + s], 1e-7);
     }
     CHECK(pl_reactor_molar(r)[3] == 0.06 && pl_reactor_molar(r)[4] == 1e-4);
+    CHECK(pl_reactor_balances(r, NULL) == 0);  /* every element is supplied from outside or broken by a lumped step */
+    pl_reactor_free(r);
+    pl_network_free(net);
+}
+
+/* An E0 sugar network: carbon is its one conserved element; a limit no step can meet undoes the step. */
+static void test_conservation(void) {
+    pl_network *net = NULL;
+    CHECK(pl_network_load(PROTOLIFE_DATA "/networks/e0-carbons.net", &net, NULL) == PL_OK);
+    if (net == NULL) return;
+    pl_reactor *r = NULL;
+    pl_diagnostic d;
+    CHECK(pl_reactor_create(net, NULL, &r, &d) == PL_OK);
+    const pl_balance *b;
+    CHECK(pl_reactor_balances(r, &b) == 1 && strcmp(b[0].name, "C") == 0);
+    CHECK(pl_reactor_advance(r, 10.0, &d) == PL_OK && fabs(b[0].drift) < 1e-12 * b[0].value);
+    double *before = malloc((size_t)pl_network_species_count(net) * sizeof *before);
+    memcpy(before, pl_reactor_molar(r), (size_t)pl_network_species_count(net) * sizeof *before);
+    CHECK(pl_reactor_set_conservation(r, 1e-300, NULL) == PL_OK);
+    CHECK(pl_reactor_advance(r, 1000.0, &d) == PL_ERROR_CONSERVATION && strstr(d.message, "undone") != NULL);
+    CHECK(pl_reactor_time(r) == 10.0 && memcmp(before, pl_reactor_molar(r), (size_t)pl_network_species_count(net) * sizeof *before) == 0);
+    CHECK(pl_reactor_set_conservation(r, 1e-9, NULL) == PL_OK && pl_reactor_advance(r, 1000.0, &d) == PL_OK);
+    free(before);
     pl_reactor_free(r);
     pl_network_free(net);
 }
@@ -103,6 +131,7 @@ int main(void) {
     test_reversible();
     test_open_tank();
     test_oregonator();
+    test_conservation();
     test_arguments();
     return check_report("reactor");
 }

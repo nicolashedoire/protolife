@@ -1,6 +1,7 @@
 #ifndef PROTOLIFE_VESICLES_H
 #define PROTOLIFE_VESICLES_H
 
+#include "protolife/balance.h"
 #include "protolife/diagnostic.h"
 #include "protolife/network.h"
 #include "protolife/ode.h"
@@ -157,16 +158,9 @@ void pl_vesicles_dilute(pl_vesicles *population, double share);
 /* Ruptures now, for a change of the medium made between steps. */
 void pl_vesicles_rupture(pl_vesicles *population);
 
-/* A balance checked at every step. */
-typedef struct pl_vesicle_balance {
-    const char *name;  /* "fatty acid", a solute's name, or an element's symbol ("C") */
-    double value;      /* mol per litre of the vessel: what is there, less what came in, plus what left */
-    double drift;      /* the sum of its changes over the steps so far, mol per litre of the vessel */
-} pl_vesicle_balance;
-
 /* The balances checked, as of the last call of pl_vesicles_advance (none before the first): their number, and the list
  * in *balances, valid until the population changes. */
-int pl_vesicles_balances(const pl_vesicles *population, const pl_vesicle_balance **balances);
+int pl_vesicles_balances(const pl_vesicles *population, const pl_balance **balances);
 /* The largest change of a balance one step may make, relative to the size of its terms (default 1e-9). */
 pl_status pl_vesicles_set_conservation(pl_vesicles *population, double relative, pl_diagnostic *diagnostic);
 

@@ -517,7 +517,7 @@ pl_status pl_vesicles_set_conservation(pl_vesicles *p, double relative, pl_diagn
     return PL_OK;
 }
 
-int pl_vesicles_balances(const pl_vesicles *p, const pl_vesicle_balance **balances) {
+int pl_vesicles_balances(const pl_vesicles *p, const pl_balance **balances) {
     if (balances != NULL) *balances = p != NULL ? p->balance : NULL;
     return p != NULL ? p->balances : 0;
 }
