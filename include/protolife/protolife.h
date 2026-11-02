@@ -10,6 +10,7 @@
 #include "protolife/network.h"
 #include "protolife/reactor.h"
 #include "protolife/vesicles.h"
+#include "protolife/capsule.h"
 #include "protolife/protocol.h"
 #include "protolife/scene.h"
 

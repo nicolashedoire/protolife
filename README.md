@@ -104,6 +104,8 @@ What exists today, in C:
   a check of the balance of atoms and charge, run in a closed or flow-through vessel.
   On the reversible Oregonator they match Genesis to within 6.2e-10.
 - `protolife/vesicles.h`: fatty acid vesicles with a network running inside each one.
+- `protolife/capsule.h`: one protocell after Taneja and Higgs 2025: two leaflets
+  exchanging lipid and flipping, capsule shapes, division when the elastic energy drops.
 - `protolife/protocol.h`: cycles of dilution, feeding and shear.
 - `protolife/scene.h`: recordings for the viewer in [viewer/](viewer).
 - [data/networks](data/networks): the reversible Oregonator and the five E0 cores of
@@ -113,9 +115,13 @@ What exists today, in C:
 
 1. **Guarantees of conservation during each run**: done for vesicle populations and the
    well-stirred reactor (see principle 2).
-2. **Reproduce a published model quantitatively**: Taneja and Higgs 2025 (an
-   autocatalytic reaction driving osmotic growth and division), with its regression
-   targets as tests.
+2. **Reproduce a published model quantitatively**: done for Taneja and Higgs 2025
+   (`protolife/capsule.h`, an autocatalytic reaction driving osmotic growth and division
+   of a two-leaflet vesicle). The tests reproduce their results: the fixed compartment's
+   steady state, homeostasis at exactly 27/8 V0 and 9/4 A0, unbounded growth when waste
+   leaves no faster than food enters, division at v = 1/2 under the equal rule,
+   divisions up to a flip-flop rate of 0.18 and none past it, bursts without lipid
+   exchange, and the inactive cells of their Figure 7.
 3. **An example anyone can install, run and modify** to compare an active vesicle with
    its control: `reproduction` is the first; it needs installation instructions that
    work outside this machine and a short guide.

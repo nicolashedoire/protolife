@@ -1,0 +1,10 @@
+# The autocatalytic reaction inside Taneja and Higgs's protocell (Life 15, 2025; Zenodo 15157714). Food C1 makes the
+# catalyst C2, two food molecules per catalyst (2 C1 + 2 C2 -> 3 C2, rate k C1^2 C2^2), and the catalyst decays into
+# two waste molecules W (rate w C2). The molecules are abstract: their formulas only count units of food, so that the
+# balance check holds (one C2 is two C1, one W is one C1). Starting state: the active state of their program (start =
+# 0.5 of the outside food in each of C1 and C2).
+species C1 C 0 dynamic 0.5
+species C2 C2 0 dynamic 0.5
+species W C 0 dynamic 0
+reaction 2 C1 + 2 C2 -> 3 C2 ; k=1 ; source=Taneja and Higgs 2025, k (their standard set)
+reaction C2 -> 2 W ; k=0.01 ; source=Taneja and Higgs 2025, w (their standard set)

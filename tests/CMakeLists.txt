@@ -1,4 +1,4 @@
-foreach(name ode network reactor vesicles rodas scene)
+foreach(name ode network reactor vesicles rodas scene capsule)
   add_executable(test_${name} test_${name}.c)
   target_link_libraries(test_${name} PRIVATE protolife protolife_warnings)
   target_compile_definitions(test_${name} PRIVATE PROTOLIFE_DATA="${PROJECT_SOURCE_DIR}/data"

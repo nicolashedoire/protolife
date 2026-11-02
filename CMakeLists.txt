@@ -13,6 +13,8 @@ include(cmake/sundials.cmake)
 configure_file(include/protolife/version.h.in include/protolife/version.h @ONLY)
 
 add_library(protolife
+  src/capsule.c
+  src/capsule_shape.c
   src/diagnostic.c
   src/formula.c
   src/network.c
