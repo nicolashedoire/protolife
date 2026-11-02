@@ -48,3 +48,8 @@ if(PROTOLIFE_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
+option(PROTOLIFE_EXAMPLES "Build the examples" ${PROJECT_IS_TOP_LEVEL})
+if(PROTOLIFE_EXAMPLES)
+  add_subdirectory(examples)
+endif()

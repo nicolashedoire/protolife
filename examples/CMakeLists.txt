@@ -1,0 +1,6 @@
+foreach(name oregonator robertson)
+  add_executable(example_${name} ${name}.c)
+  set_target_properties(example_${name} PROPERTIES OUTPUT_NAME ${name})
+  target_link_libraries(example_${name} PRIVATE protolife protolife_warnings)
+  target_compile_definitions(example_${name} PRIVATE PROTOLIFE_DATA="${PROJECT_SOURCE_DIR}/data")
+endforeach()
