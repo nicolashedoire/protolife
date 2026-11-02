@@ -14,7 +14,10 @@ configure_file(include/protolife/version.h.in include/protolife/version.h @ONLY)
 
 add_library(protolife
   src/diagnostic.c
-  src/ode.c)
+  src/formula.c
+  src/network.c
+  src/ode.c
+  src/reactor.c)
 add_library(protolife::protolife ALIAS protolife)
 target_include_directories(protolife PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

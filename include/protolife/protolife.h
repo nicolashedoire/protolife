@@ -5,5 +5,7 @@
 #include "protolife/version.h"
 #include "protolife/diagnostic.h"
 #include "protolife/ode.h"
+#include "protolife/network.h"
+#include "protolife/reactor.h"
 
 #endif

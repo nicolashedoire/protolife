@@ -19,7 +19,8 @@ This is the design the code will follow. It is a proposal until the C core exist
 - **C11**, built with CMake as static and shared libraries.
 - **Opaque handles** and a stable C API under one prefix (`pl_`). The Python layer, and
   any other language, binds to that API only.
-- **SI units** everywhere in the API; each quantity documents its unit.
+- **SI units** everywhere in the API, with one exception: concentrations in chemistry
+  are in mol/L, the unit of published rate constants. Each quantity documents its unit.
 - **Struct of arrays**: each per-vesicle or per-species field is one contiguous
   `double` array, so Python sees it without a copy.
 - **Status codes**: every call that can fail returns a code and fills a diagnostic

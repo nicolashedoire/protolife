@@ -84,14 +84,22 @@ What exists today, in C:
   reach its time leaves the state as it was and says why; nothing is clipped. On
   Robertson's stiff chemistry it matches the Genesis integrator it replaces to within
   2.4e-9, in about 80 times fewer steps.
+- `protolife/network.h`: reaction networks with formulas over the whole periodic table,
+  three roles (dynamic, reservoir, implicit), a source for every reaction, a check of the
+  balance of atoms and charge, the mass-action rate law and its Jacobian, read from text
+  (Genesis's `.net` format, see [data/networks](data/networks)).
+- `protolife/reactor.h`: a well-stirred vessel, closed or open (continuous flow), running
+  a network. On the reversible Oregonator (Belousov–Zhabotinsky) it matches Genesis to
+  within 6.2e-10 over 60 s of oscillations.
 
 ## Roadmap
 
 1. **Landscape of existing tools**: done, see [docs/landscape.md](docs/landscape.md).
 2. **C11 core** (in progress): the general bricks behind a stable C API, with
    regression tests against the Genesis results they come from. Done: diagnostics,
-   stiff integration. Next: reaction networks, stochastic simulation, molecules and
-   rules, vesicles, media and protocols, observation.
+   stiff integration, reaction networks, the well-stirred reactor. Next: molecules and
+   rules (the chemistry that builds networks), vesicles, media and protocols,
+   stochastic simulation, observation.
 3. **Python layer**: `pip install protolife`, with the example above as the first
    working script.
 4. **Documentation and a catalogue of calibrated worlds**, plus reference tests

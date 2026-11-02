@@ -1,0 +1,41 @@
+# Reversible Oregonator: the reduced Belousov-Zhabotinsky mechanism, with
+# real species. Constants: A. K. Dutt, AIP Advances 1, 042147 (2011), Table II,
+# "ff" column (Field and Forsterling 1986), [H+] = 0.8 M folded into each
+# constant; units M-1 s-1, except steps 5 and -5 (s-1). Fig. 3 of the article
+# (b = 0.06 M, p = 1e-4 M, f = 1, k-5 = 10 s-1, "ff1") shows oscillations.
+#
+# X = HBrO2, Y = Br-, Z = Ce4+ evolve. B = BrO3- and P = HOBr are held fixed
+# from outside (open system). H+ and H2O are written only for the balance.
+# Initial X, Y, Z are a choice of this file, not from the article (a limit
+# cycle does not depend on them).
+species X HBrO2 0 dynamic 1e-7
+species Y Br -1 dynamic 1e-6
+species Z Ce 4 dynamic 1e-6
+species B BrO3 -1 reservoir 0.06
+species P HOBr 0 reservoir 1e-4
+species Hplus H 1 implicit 0.8
+species Water H2O 0 implicit 55.5
+
+# O1: BrO3- + Br- + 2 H+ <-> HBrO2 + HOBr
+reaction B + Y -> X + P ; k=1.28 ; implicit=2 Hplus -> ; source=Dutt 2011 Table II ff, step 1
+reaction X + P -> B + Y ; k=3.2 ; implicit= -> 2 Hplus ; source=Dutt 2011 Table II ff, step -1
+
+# O2: HBrO2 + Br- + H+ <-> 2 HOBr
+reaction X + Y -> 2 P ; k=2.40e6 ; implicit=Hplus -> ; source=Dutt 2011 Table II ff, step 2
+reaction 2 P -> X + Y ; k=2.0e-5 ; implicit= -> Hplus ; source=Dutt 2011 Table II ff, step -2
+
+# O3, autocatalysis, written as in the article (one Z per event). The complete
+# chemistry is BrO3- + HBrO2 + 3 H+ + 2 Ce3+ -> 2 HBrO2 + 2 Ce4+ + H2O (two
+# Ce4+, through the radical BrO2): the model step is global, not balanced.
+reaction B + X -> 2 X + Z ; k=33.6 ; lumped ; source=Dutt 2011 Table II ff, step 3 (global step)
+reaction 2 X + Z -> B + X ; k=4.20e7 ; lumped ; source=Dutt 2011 Table II ff, step -3 (global step)
+
+# O4: 2 HBrO2 <-> BrO3- + HOBr + H+
+reaction 2 X -> B + P ; k=3000 ; implicit= -> Hplus ; source=Dutt 2011 Table II ff, step 4
+reaction B + P -> 2 X ; k=8.0e-9 ; implicit=Hplus -> ; source=Dutt 2011 Table II ff, step -4
+
+# O5: Ce4+ oxidises the organic substrate (malonic acid) and releases f Br-.
+# Global step, f = 1; the reverse constant k-5 = 10 s-1 is Dutt's "ff1" choice
+# (K5 < 1), which keeps a realistic equilibrium in a closed vessel.
+reaction Z -> Y ; k=1.0 ; lumped ; source=Dutt 2011 Fig. 3, k5 (global step)
+reaction Y -> Z ; k=10 ; lumped ; source=Dutt 2011 Fig. 3, k-5 ff1 (global step)
