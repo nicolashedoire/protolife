@@ -25,11 +25,15 @@ git clone https://github.com/nicolashedoire/protolife.git
 cd protolife
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel
-ctest --test-dir build -C Release --output-on-failure
+ctest --test-dir build -C Release --output-on-failure --parallel 4
 ```
 
-The tests take about half a minute. They include the reproduction of a published model
-(Taneja and Higgs 2025) and checks of every balance of matter.
+The tests take about a minute. They include the reproduction of a published model
+(Taneja and Higgs 2025), checks of every balance of matter, and a shortened step 8 of
+Genesis: in one cycle a lineage whose chemistry runs takes a larger share of the
+membranes, its twins without chemistry stay exactly even, and a lineage whose chemistry
+stops gains nothing more. These three take most of that minute; `--label-exclude long`
+leaves them out.
 
 The programs are in `build/examples/` (on Windows `build\examples\Release\`, with
 `.exe`). Run them from the project's folder: they write their recordings in
