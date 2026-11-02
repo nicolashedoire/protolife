@@ -10,3 +10,5 @@ __pycache__/
 *.so
 *.dylib
 .DS_Store
+build-*/
+build-configure.log

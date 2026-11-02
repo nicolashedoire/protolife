@@ -7,11 +7,12 @@ protocells what a neural-network library is to deep learning: a set of composabl
 tested parts (chemistry, compartments, media, protocols, measurements) that anyone
 can assemble to build a candidate living system and test it against a control.
 
-> **Status: pre-alpha, no code yet.** The library is being extracted from Genesis,
-> a C11 research code that already simulates self-maintaining sugar chemistry inside
-> fatty-acid vesicles, their growth, division and one-bit heredity. This repository
-> currently holds the design: [the landscape of existing tools](docs/landscape.md)
-> and [the architecture](docs/architecture.md). Nothing below works yet.
+> **Status: pre-alpha.** The library is being extracted from Genesis, a C11 research
+> code that already simulates self-maintaining sugar chemistry inside fatty-acid
+> vesicles, their growth, division and one-bit heredity. The C core has started with
+> its foundation: error reporting and stiff integration over SUNDIALS. The design is in
+> [the landscape of existing tools](docs/landscape.md) and
+> [the architecture](docs/architecture.md). The Python API shown below does not exist yet.
 
 ## What it is for
 
@@ -63,11 +64,34 @@ trace = world.run(pl.Cycles(count=8, period=15 * 60, shear="permanent"))
 trace.plot("sugar_carbon", by="lineage")
 ```
 
+## Building the C core
+
+Requirements: CMake 3.24 or later and a C11 compiler. SUNDIALS 7.9.0 is downloaded and
+built during configuration (to build offline, pass
+`-DFETCHCONTENT_SOURCE_DIR_SUNDIALS=/path/to/sundials-7.9.0`).
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+What exists today, in C:
+
+- `protolife/diagnostic.h`: every call that can fail returns a status and fills a
+  diagnostic with the code of the library underneath, the model time and a message.
+- `protolife/ode.h`: stiff integration by CVODE with event functions. A call that cannot
+  reach its time leaves the state as it was and says why; nothing is clipped. On
+  Robertson's stiff chemistry it matches the Genesis integrator it replaces to within
+  2.4e-9, in about 80 times fewer steps.
+
 ## Roadmap
 
 1. **Landscape of existing tools**: done, see [docs/landscape.md](docs/landscape.md).
-2. **C11 core**: the general bricks behind a stable C API, with regression tests
-   against the Genesis results they come from.
+2. **C11 core** (in progress): the general bricks behind a stable C API, with
+   regression tests against the Genesis results they come from. Done: diagnostics,
+   stiff integration. Next: reaction networks, stochastic simulation, molecules and
+   rules, vesicles, media and protocols, observation.
 3. **Python layer**: `pip install protolife`, with the example above as the first
    working script.
 4. **Documentation and a catalogue of calibrated worlds**, plus reference tests

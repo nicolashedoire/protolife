@@ -23,7 +23,9 @@ This is the design the code will follow. It is a proposal until the C core exist
 - **Struct of arrays**: each per-vesicle or per-species field is one contiguous
   `double` array, so Python sees it without a copy.
 - **Status codes**: every call that can fail returns a code and fills a diagnostic
-  (time, variable, reason). Nothing is clamped or corrected in silence.
+  (time, variable, reason). Nothing is clamped or corrected in silence. SUNDIALS is
+  built with its logging off and its error handler replaced, so its messages reach the
+  caller through the diagnostic instead of the terminal.
 - **Validity domains**: each mechanism carries its source and the parameter ranges
   where it was calibrated; a value outside them is an error unless the caller
   explicitly declares an extrapolation.
