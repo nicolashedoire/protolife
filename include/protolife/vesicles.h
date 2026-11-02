@@ -35,6 +35,13 @@
  * Jacobian by differences, as Genesis does: the switch between a relaxed vesicle and a tense sphere is a kink where a
  * Newton iteration stalls. Ruptures, comings apart, births, divisions and the washout are then applied, in that order.
  * A call that fails changes nothing.
+ *
+ * Every call also checks the balances that must hold whatever the model does: the fatty acid (in membranes, free,
+ * entering membranes, as anhydride; with what was fed as micelles or poured as anhydride, renewed and washed out), each
+ * solute outside the network (with what was renewed and washed out), and each element the network conserves
+ * (pl_network_conserves: carbon for a sugar network, not hydrogen or oxygen, which water supplies). A step that changes
+ * one of them by more than `conservation` times the size of its terms is undone, and the call fails with
+ * PL_ERROR_CONSERVATION naming the balance. The changes below that limit add up in each balance's drift.
  * Amounts are per litre of the vessel, concentrations in the medium in mol/L, lengths in m, time in s.
  */
 
@@ -93,6 +100,7 @@ typedef struct pl_vesicle_ledger {
     double apart;            /* vesicles that came apart */
     double washed;           /* mol of fatty acid that left in vesicles (washout, dilution) */
     double renewed_monomer;  /* mol of free fatty acid brought in, net, by the renewal and dilutions */
+    double fed;              /* mol of fatty acid fed as micelles */
     const double *renewed;   /* mol of each solute brought in, net (what left inside vesicles counted as leaving) */
     const double *leaked;    /* mol of each solute let out by ruptures */
 } pl_vesicle_ledger;
@@ -148,6 +156,19 @@ void pl_vesicles_feed_micelles(pl_vesicles *population, double amount);
 void pl_vesicles_dilute(pl_vesicles *population, double share);
 /* Ruptures now, for a change of the medium made between steps. */
 void pl_vesicles_rupture(pl_vesicles *population);
+
+/* A balance checked at every step. */
+typedef struct pl_vesicle_balance {
+    const char *name;  /* "fatty acid", a solute's name, or an element's symbol ("C") */
+    double value;      /* mol per litre of the vessel: what is there, less what came in, plus what left */
+    double drift;      /* the sum of its changes over the steps so far, mol per litre of the vessel */
+} pl_vesicle_balance;
+
+/* The balances checked, as of the last call of pl_vesicles_advance (none before the first): their number, and the list
+ * in *balances, valid until the population changes. */
+int pl_vesicles_balances(const pl_vesicles *population, const pl_vesicle_balance **balances);
+/* The largest change of a balance one step may make, relative to the size of its terms (default 1e-9). */
+pl_status pl_vesicles_set_conservation(pl_vesicles *population, double relative, pl_diagnostic *diagnostic);
 
 double pl_vesicles_time(const pl_vesicles *population);
 int pl_vesicles_records(const pl_vesicles *population);

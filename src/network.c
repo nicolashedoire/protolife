@@ -391,6 +391,24 @@ pl_status pl_network_check_balance(const pl_network *network, pl_diagnostic *dia
     return PL_OK;
 }
 
+int pl_network_conserves(const pl_network *network, const char *element) {
+    int e = pl_element_find(element);
+    if (network == NULL || e < 0) return 0;
+    for (int s = 0; s < network->species_count; s++)
+        if (network->species[s].role != PL_DYNAMIC && network->species[s].atoms[e] != 0) return 0;
+    for (int r = 0; r < network->reaction_count; r++) {
+        const reaction *x = &network->reactions[r];
+        long left = 0, right = 0;
+        for (int t = 0; t < x->count[LEFT] + x->count[RIGHT]; t++) {
+            long n = (long)x->terms[t].coefficient * network->species[x->terms[t].species].atoms[e];
+            if (t < x->count[LEFT]) left += n;
+            else right += n;
+        }
+        if (left != right) return 0;
+    }
+    return 1;
+}
+
 /* ---- accessors ---- */
 
 int pl_network_species_count(const pl_network *network) { return network != NULL ? network->species_count : 0; }

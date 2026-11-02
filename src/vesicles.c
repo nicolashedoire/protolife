@@ -63,6 +63,7 @@ pl_status pl_vesicles_create(const pl_vesicle_constants *constants, int max_reco
     pl_vesicles *p = calloc(1, sizeof *p);
     if (p == NULL) return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, NAN, "the population could not be allocated");
     p->k = *constants, p->max_records = max_records > 0 ? max_records : 24, p->nursery = -1, p->tolerance = 1e-8;
+    p->conservation = 1e-9;
     p->record = calloc((size_t)p->max_records, sizeof *p->record);
     p->shape = calloc((size_t)p->max_records, sizeof *p->shape);
     if (p->record == NULL || p->shape == NULL) {
@@ -81,6 +82,7 @@ void pl_vesicles_free(pl_vesicles *p) {
     free(p->outside), free(p->leaked), free(p->feed), free(p->renewed);
     free(p->species_of), free(p->solute_of), free(p->molar), free(p->change);
     free(p->c_outside), free(p->c_inside), free(p->rate);
+    pl_vesicles_free_balances(p);
     free(p);
 }
 
@@ -381,13 +383,38 @@ static int jacobian(double t, const double *y, double *jac, void *context) {
     return 0;
 }
 
+/* After a step: every balance changed by no more than `conservation` times the size of its terms, or the step is undone
+ * and the call fails naming the balance; the changes allowed add up in the drifts. */
+static pl_status check_balances(pl_vesicles *p, double dt, pl_diagnostic *diagnostic) {
+    pl_vesicles_measure(p, p->after, p->scale_after);
+    for (int b = 0; b < p->balances; b++) {
+        double change = p->after[b] - p->before[b], size = fmax(p->scale[b], p->scale_after[b]);
+        if (fabs(change) <= p->conservation * size) continue;
+        const char *name = p->balance[b].name;
+        double t = p->time;
+        pl_vesicles_restore(p);
+        return pl_fail(diagnostic, PL_ERROR_CONSERVATION, b, t,
+                       "the balance of %s changed by %.3g mol/L (%.3g of its size, %.3g allowed) over the step of %g s "
+                       "ending at t = %.17g s: the step is undone",
+                       name, change, size > 0.0 ? fabs(change) / size : INFINITY, p->conservation, dt, t);
+    }
+    for (int b = 0; b < p->balances; b++)
+        p->balance[b].drift += p->after[b] - p->before[b], p->balance[b].value = p->after[b];
+    pl_succeed(diagnostic);
+    return PL_OK;
+}
+
 pl_status pl_vesicles_advance(pl_vesicles *p, double dt, pl_diagnostic *diagnostic) {
     if (p == NULL) return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the population is required");
     if (!(dt > 0.0) || !isfinite(dt)) return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, p->time, "dt must be > 0");
+    if (pl_vesicles_prepare_balances(p) != 0)
+        return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, p->time, "no memory for the balances");
     int n = pl_vesicles_state_size(p);
     double *y = malloc(5 * (size_t)n * sizeof *y), *floor = y != NULL ? y + n : NULL;
     if (y == NULL) return pl_fail(diagnostic, PL_ERROR_MEMORY, 0, p->time, "no memory to advance the vesicles");
     p->work = y + 2 * n;
+    pl_vesicles_measure(p, p->before, p->scale);
+    pl_vesicles_save(p);
     pl_vesicles_pack(p, y);
     for (int i = 0; i < n; i++) floor[i] = fmax(fabs(y[i]) * 1e-6, 1e-18);
     pl_rodas_options o = {.size = n, .rhs = derivative, .jacobian = jacobian, .context = p, .tolerance = p->tolerance,
@@ -402,6 +429,7 @@ pl_status pl_vesicles_advance(pl_vesicles *p, double dt, pl_diagnostic *diagnost
         pl_vesicles_births(p);
         pl_vesicles_divisions(p);
         pl_vesicles_wash(p, dt);
+        status = check_balances(p, dt, diagnostic);
     }
     p->work = NULL;
     free(y);
@@ -479,6 +507,19 @@ pl_status pl_vesicles_set_tolerance(pl_vesicles *p, double relative, pl_diagnost
     p->tolerance = relative;
     pl_succeed(diagnostic);
     return PL_OK;
+}
+
+pl_status pl_vesicles_set_conservation(pl_vesicles *p, double relative, pl_diagnostic *diagnostic) {
+    if (p == NULL || !(relative > 0.0) || !(relative < 1.0))
+        return pl_fail(diagnostic, PL_ERROR_ARGUMENT, 0, NAN, "the conservation limit must lie between 0 and 1");
+    p->conservation = relative;
+    pl_succeed(diagnostic);
+    return PL_OK;
+}
+
+int pl_vesicles_balances(const pl_vesicles *p, const pl_vesicle_balance **balances) {
+    if (balances != NULL) *balances = p != NULL ? p->balance : NULL;
+    return p != NULL ? p->balances : 0;
 }
 
 pl_status pl_vesicles_set_inert(pl_vesicles *p, int record, int inert, pl_diagnostic *diagnostic) {
@@ -572,8 +613,8 @@ double pl_vesicles_solute_total(const pl_vesicles *p, int solute) {
 
 pl_vesicle_ledger pl_vesicles_ledger(const pl_vesicles *p) {
     if (p == NULL) return (pl_vesicle_ledger){0};
-    return (pl_vesicle_ledger){p->ruptures, p->feeds, p->divided, p->born, p->apart, p->washed, p->renewed_monomer,
-                               p->renewed, p->leaked};
+    return (pl_vesicle_ledger){p->ruptures, p->feeds,           p->divided, p->born,   p->apart,
+                               p->washed,   p->renewed_monomer, p->fed,     p->renewed, p->leaked};
 }
 
 void pl_vesicles_get_statistics(const pl_vesicles *p, pl_ode_statistics *statistics) {

@@ -158,6 +158,11 @@ int main(int argc, char **argv) {
     if (status == PL_OK) status = record(&w, scene, &d);
     if (status != PL_OK) fprintf(stderr, "%s at t = %.6g s: %s\n", pl_status_name(status), d.time, d.message);
     else printf("%s: %ld frames: %s\n", w.o.out, pl_scene_frames(scene), w.o.living ? "living vesicles" : "the control");
+    const pl_vesicle_balance *balance;
+    int balances = w.p != NULL ? pl_vesicles_balances(w.p, &balance) : 0;
+    for (int b = 0; b < balances; b++)  /* the balances checked at every step, and how far they drifted in all */
+        printf("  balance of %s: %.6g mol/L, drift %.3g (%.3g of it)\n", balance[b].name, balance[b].value,
+               balance[b].drift, balance[b].value != 0.0 ? fabs(balance[b].drift / balance[b].value) : 0.0);
     pl_scene_free(scene);
     pl_vesicles_free(w.p);
     pl_network_free(w.network);

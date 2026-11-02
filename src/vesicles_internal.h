@@ -47,6 +47,16 @@ struct pl_vesicles {
     double *c_inside, *rate;               /* mol/m^3 per solute */
     pl_vesicle_shape *shape;               /* per record */
     double *work;                          /* 3 x state size: the Jacobian's shifted states, during a call */
+    double fed;                            /* mol/L of fatty acid fed as micelles since the start */
+    /* the balances checked at every step */
+    double conservation;                   /* the largest relative change a step may make */
+    pl_vesicle_balance *balance;
+    int balances, *balance_kind, *balance_index;  /* kind: 0 fatty acid, 1 a solute, 2 an element */
+    double *before, *after, *scale, *scale_after;  /* per balance, during a call */
+    /* the state before a step, to undo it */
+    struct pl_vesicles *saved;
+    record_t *saved_record;
+    double *saved_inside, *saved_outside, *saved_leaked, *saved_renewed;
 };
 
 /* The layout of the integrated state, per litre of the vessel: each record's fatty acids (mol) and solutes inside
@@ -57,6 +67,14 @@ int pl_vesicles_state_size(const pl_vesicles *p);
 void pl_vesicles_pack(const pl_vesicles *p, double *y);
 /* The medium's volume per litre of the vessel and its osmolarity (osm/m^3), filling p->c_outside and p->shape. */
 double pl_vesicles_read(pl_vesicles *p, const double *y, double *osmolarity);
+
+/* The balances (vesicles_balances.c): made once the solutes are fixed; measured into value and scale; the state kept
+ * before a step and put back. */
+int pl_vesicles_prepare_balances(pl_vesicles *p);
+void pl_vesicles_measure(const pl_vesicles *p, double *value, double *scale);
+void pl_vesicles_save(pl_vesicles *p);
+void pl_vesicles_restore(pl_vesicles *p);
+void pl_vesicles_free_balances(pl_vesicles *p);
 
 /* The end-of-step events (vesicles_events.c). */
 void pl_vesicles_come_apart(pl_vesicles *p);

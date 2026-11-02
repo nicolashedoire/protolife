@@ -47,6 +47,7 @@ void pl_vesicles_feed_micelles(pl_vesicles *p, double amount) {
     p->forming += (1.0 - to_membranes) * rest;
     p->nursery = -1;
     p->feeds++;
+    p->fed += amount;
 }
 
 /* What the intermediate made becomes vesicles of the measured radius, closed round the medium (nearly full spheres),

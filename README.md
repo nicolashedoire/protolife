@@ -42,9 +42,13 @@ by a complete use case and a comparison with those tools; that is the roadmap be
 ## Principles
 
 1. **Every mechanism cites its source** and declares the range where it holds.
-2. **Conservation is checked.** Every brick's tests close its balances of matter (fatty
-   acid, each solute, carbon); checks during each run, with the drift reported, are
-   the next step.
+2. **Conservation is checked during each run.** At every step a vesicle population
+   measures its balances: the fatty acid (with what was fed, renewed and washed out),
+   each solute outside the chemistry, and each element the chemistry conserves (carbon
+   for a sugar network; not hydrogen or oxygen, which water supplies). A step that
+   changes one by more than a billionth of its size is undone and the call fails,
+   naming the balance; smaller changes add up in a drift anyone can read. Over the two
+   hours of the step-6 run, the three balances drift by less than 1e-12 of their size.
 3. **A solver that fails says so.** It never returns a silently corrected state: a call
    that fails leaves the simulation as it was and its diagnostic says why.
 4. **Controls are built in.** Every experiment can be rerun without the mechanism under
@@ -105,9 +109,8 @@ What exists today, in C:
 
 ## Roadmap
 
-1. **Guarantees of conservation during each run**: balances of fatty acid, of each
-   solute and of each element checked as the simulation goes, a drift beyond tolerance
-   stopping it with its diagnostic.
+1. **Guarantees of conservation during each run**: done for vesicle populations (see
+   principle 2); the well-stirred reactor is next.
 2. **Reproduce a published model quantitatively**: Taneja and Higgs 2025 (an
    autocatalytic reaction driving osmotic growth and division), with its regression
    targets as tests.

@@ -42,6 +42,11 @@ pl_status pl_network_add_reaction(pl_network *network, const char *equation, dou
                                   int lumped, const char *source, pl_diagnostic *diagnostic);
 pl_status pl_network_set_temperature(pl_network *network, double kelvin, pl_diagnostic *diagnostic);
 
+/* 1 when the network's reactions cannot change the total amount of `element` ("C", "N", ...) held by its dynamic
+ * species: no reservoir or implicit species contains it (the outside would be an untracked source), and every reaction,
+ * lumped ones included, has as much of it on both sides. 0 otherwise, or for an unknown element. */
+int pl_network_conserves(const pl_network *network, const char *element);
+
 /* Every reaction that is not lumped conserves each element and the charge, implicit terms included; otherwise
  * PL_ERROR_CONSERVATION, naming the first reaction and the first quantity that differ. */
 pl_status pl_network_check_balance(const pl_network *network, pl_diagnostic *diagnostic);

@@ -24,6 +24,11 @@ static void test_oregonator(void) {
     CHECK(strstr(pl_network_reaction_source(net, 0), "Dutt 2011") != NULL);
     CHECK(pl_network_find(net, "nothing") == -1);
     CHECK(pl_network_check_balance(net, &d) == PL_OK);
+    CHECK(!pl_network_conserves(net, "Br"));  /* bromate is held from outside */
+    CHECK(!pl_network_conserves(net, "Ce"));  /* the lumped steps do not keep cerium */
+    pl_network_free(net);
+    CHECK(pl_network_load(PROTOLIFE_DATA "/networks/e0-carbons.net", &net, &d) == PL_OK);
+    CHECK(pl_network_conserves(net, "C") && !pl_network_conserves(net, "O") && !pl_network_conserves(net, "Xx"));
     pl_network_free(net);
 }
 

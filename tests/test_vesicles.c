@@ -163,9 +163,42 @@ static void test_chemistry_inside(void) {
     pl_vesicles_dilute(p, 0.5);  /* half the vessel replaced: what the vesicles held leaves with them */
     after = carbon(p, net, &renewed);
     CHECK_CLOSE(after - renewed, carbon0, 1e-9);
+    /* the balances checked at every step: the fatty acid, the buffer, carbon; not hydrogen or oxygen (water) */
+    const pl_vesicle_balance *b;
+    int balances = pl_vesicles_balances(p, &b), found = 0;
+    for (int i = 0; i < balances; i++) {
+        found |= (strcmp(b[i].name, "fatty acid") == 0) | (strcmp(b[i].name, "bicine") == 0) << 1 |
+                 (strcmp(b[i].name, "C") == 0) << 2;
+        CHECK(strcmp(b[i].name, "H") != 0 && strcmp(b[i].name, "O") != 0);
+        CHECK(fabs(b[i].drift) <= 1e-12 * fabs(b[i].value) + 1e-18);
+    }
+    CHECK(balances == 3 && found == 7);
     free(seeded), free(fresh);
     pl_vesicles_free(p);
     pl_network_free(net);
+}
+
+/* A limit no step can meet: the step is undone, the population as it was, and the balance named. */
+static void test_conservation_refused(void) {
+    int kept;
+    pl_vesicles *p = population(0.0, &kept);
+    pl_vesicles_feed_micelles(p, 0.5 * pl_vesicles_membranes(p));
+    CHECK(pl_vesicles_advance(p, 1.0, NULL) == PL_OK);
+    double acid = pl_vesicles_fatty_acid(p), time = pl_vesicles_time(p), monomer = pl_vesicles_monomer(p);
+    pl_vesicle v = pl_vesicles_record(p, 0);
+    int records = pl_vesicles_records(p);
+    pl_diagnostic d;
+    CHECK(pl_vesicles_set_conservation(p, 1e-300, &d) == PL_OK);
+    CHECK(pl_vesicles_advance(p, 5.0, &d) == PL_ERROR_CONSERVATION);
+    CHECK(strstr(d.message, "the balance of") != NULL && strstr(d.message, "undone") != NULL);
+    CHECK(pl_vesicles_time(p) == time && pl_vesicles_fatty_acid(p) == acid && pl_vesicles_monomer(p) == monomer);
+    CHECK(pl_vesicles_record(p, 0).molecules == v.molecules && pl_vesicles_records(p) == records);
+    CHECK(pl_vesicles_set_conservation(p, 1e-9, &d) == PL_OK);
+    CHECK(pl_vesicles_advance(p, 5.0, &d) == PL_OK);  /* and it goes on with a sound limit */
+    const pl_vesicle_balance *b;
+    CHECK(pl_vesicles_balances(p, &b) == 2 && strcmp(b[0].name, "fatty acid") == 0 && strcmp(b[1].name, "buffer") == 0);
+    CHECK(pl_vesicles_ledger(p).fed > 0.0);
+    pl_vesicles_free(p);
 }
 
 static void test_arguments(void) {
@@ -189,6 +222,7 @@ int main(void) {
     test_rupture();
     test_growth_and_division();
     test_chemistry_inside();
+    test_conservation_refused();
     test_arguments();
     return check_report("vesicles");
 }

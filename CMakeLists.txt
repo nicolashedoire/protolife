@@ -22,6 +22,7 @@ add_library(protolife
   src/rodas.c
   src/scene.c
   src/vesicles.c
+  src/vesicles_balances.c
   src/vesicles_events.c)
 add_library(protolife::protolife ALIAS protolife)
 target_include_directories(protolife PUBLIC
